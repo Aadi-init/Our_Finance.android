@@ -1,0 +1,399 @@
+Status Bar: 24px
+Android Navigation Bar: 34px
+
+///////////////////////////////////////////////////////
+
+Pages of the App:
+- Sign Up
+- Login
+- Forgot Password
+- Verify
+- New Password
+- Dashboard
+- Add Expenses
+- Add Expenses (Description)
+- Add Transaction (Lend)
+- Add Transaction (Borrow)
+- Add Transaction (Description)
+- Expense Statement
+- Transactions statement
+- Accessibility
+
+///////////////////////////////////////////////////////
+
+//// Light Mode ////
+
+App Background: #F6F6F6
+Nav Bar (Pill Shaped) Tray Background: #EBEBEB
+Nav Bar (Pill Shaped) Slider Background (Highlights the current page): #FFFFFF
+Nav Bar (Pill Shaped) Highlighted Icon: #000000
+Nav Bar (Pill Shaped) Other Page Icons: #A9A9A9
+
+*** Nav Bar (Pill Shaped) is only available in Dashboard, Expense Statement, Transaction Statement and Accessibility Pages ***
+
+// Sign Up, Login Page, Forgot Password Page, Verify Page and New Password Page //
+
+# Black (#000000):
+	- Greeting Text (Signup: Let's Get Started; Login: Hey Welcome Back; Forgot Password: Forgot Password; Verify: Verify your email; New Password: Create New Password)
+	- Button Background (Signup, Login, Send Mail, Verify and Save)
+	- Google Text (Continue with Google)
+	- Login Text (Already have an account? Login); Signup Text (Don't have an account? Sign Up)
+
+# White (#FFFFFF):
+	- Text Box background
+	- Button text (Sign up, Login, Send mail, Verify, Save)
+
+# Light Gray (#A9A9A9):
+	- Text Box text (Email Id, Password, Confirm Password, New Password)
+	- Info Text (We will send a code on your mail; Enter the 4 digit code sent to your mail; Resend Code; Forgot Password?; Don’t have an account?; Already have an account?)
+	- OR text and separator line in between Signup and Continue with Google.
+
+// Dashboard //
+
+# Black (#000000):
+	- User Name (Arnab Banik)
+	- Add and Notification icon
+	- Rent Invoice Tab Title Text
+	- Month Text (May 2026)
+	- Month Bill (Tk. 7,418)
+	- Bill item title and Tab Title Text in Expense Summary Tab and Transaction Summary Tab; Bill amount in Expense Summary Tab items.
+	- Transactions and Expenses Text in Transactions and Expense Buttons that pop up when the Add icon is clicked.
+
+# Black (#000000 50% opacity): Rent Invoice item titles and amount
+
+# Gray (#757575): Rent Invoice items row separator.
+
+# White (#FFFFFF): Rent Invoice, Expense Summary, Transaction Summary Tab Background.
+
+# Light Gray (#EBEBEB): Background of Transactions and Expense Buttons that pop up when the Add icon is clicked.
+
+# Accent Red (#FF383C):
+	- Pending Button on Rent Invoice Tab
+	- Negative Amount
+
+# Accent Green (#34C759):
+	- Paid Button on Rent Invoice Tab
+	- Positive Amount
+
+// Add Expenses //
+
+# Black (#000000):
+	- Page title
+	- Back Button Icon (Left Arrowhead)
+	- Save Button Icon (Check)
+	- Category item (Groceries) and Date item (10th May)
+	- All button Texts of the Calculator (+, ., -, /, 0, 1, 2 etc.)
+
+# Black (#000000 50% opacity): Category and Date Title and Text that leads to "Add Expense Description" (Add more Details >) AND the line separating the calculator
+
+# White (#FFFFFF): Background of the number buttons in the calculator (0, 1, 2, etc.)
+
+# Gray (#D6D6D6): Background of the operator buttons in the calculator (+, -, ., /, etc.)
+
+// Add Expenses Description //
+
+# Black (#000000):
+	- Page title
+	- Back Button Icon (Left Arrowhead)
+	- Save Button Icon (Check)
+	- Category item (Groceries) and Date item (10th May) [Text Box Input Text]
+	- Text Box Icon (to select date and show options icon)
+
+# Black (#000000 50% opacity): Item Title (Date, Category, Description, Amount)
+
+# White (#FFFFFF): Background of Text Box
+
+// Add Transaction (Lend) //
+
+# Black (#000000):
+	- Page title
+	- Back Button Icon (Left Arrowhead)
+	- Save Button Icon (Check)
+	- Category item (Groceries) and Date item (10th May)
+	- All button Texts of the Calculator (+, ., -, /, 0, 1, 2 etc.)
+	- Pill Shaped Bar Highlighted text (Lend)
+
+# Black (#000000 50% opacity): Person and Date Title and Text that leads to "Add Expense Description" (Add more Details >) AND the line separating the calculator
+
+# White (#FFFFFF): 
+	- Background of the number buttons in the calculator (0, 1, 2, etc.)
+	- Pill Shaped Bar Highlighted portion Background
+
+# Gray (#EBEBEB): Pill Shaped Bar Background
+
+# Gray (#A9A9A9): Pill Shaped Bar unhighlighted text (Borrow)
+
+// Add Transaction (Borrow) //
+
+# Black (#000000):
+	- Page title
+	- Back Button Icon (Left Arrowhead)
+	- Save Button Icon (Check)
+	- Category item (Groceries) and Date item (10th May)
+	- All button Texts of the Calculator (+, ., -, /, 0, 1, 2 etc.)
+	- Pill Shaped Bar Highlighted text (Borrow)
+
+# Black (#000000 50% opacity): Person and Date Title and Text that leads to "Add Expense Description" (Add more Details >) AND the line separating the calculator
+
+# White (#FFFFFF): 
+	- Background of the number buttons in the calculator (0, 1, 2, etc.)
+	- Pill Shaped Bar Highlighted portion Background
+
+# Gray (#EBEBEB): Pill Shaped Bar Background
+
+# Gray (#A9A9A9): Pill Shaped Bar unhighlighted text (Lend)
+
+// Add Transactions Description //
+
+# Black (#000000):
+	- Page title
+	- Back Button Icon (Left Arrowhead)
+	- Save Button Icon (Check)
+	- Person item (Sadman) and Date item (10th May) [Text Box Input Text]
+	- Text Box Icon (to select date and show options icon)
+
+# Black (#000000 50% opacity): Item Title (Date, Person, Description, Amount)
+
+# White (#FFFFFF): Background of Text Box
+
+// Expense Statement //
+
+# Black (#000000):
+	- Page Title (Expenses)
+	- Month Pill Box Text (May 2026)
+	- Add icon that navigates to add expenses page
+	- Date Box Background
+	- Category and description of each expense entry (Groceries / Miscellaneous; Aloo, Dim, Bread, Peyaj, Coffee, Chini, Tel, Chaal, Dal)
+	- Amount Text of each expense entry (Tk. 1500.00)
+	
+# White (#FFFFFF):
+	- Background of each expense entry row.
+	- Text of Date Box (1) if each expense entry row
+
+# Gray (#D6D6D6): Month Pill Box Background
+
+// Transaction Statement //
+
+# Black (#000000):
+	- Page Title (Transactions)
+	- Month Pill Box Text (May 2026)
+	- Add icon that navigates to add transactions page
+	- Date Box Background
+	- Person and description of each transaction entry (Sadman / Sabbir; Aloo, Dim, Bread, Peyaj, Coffee, Chini, Tel, Chaal, Dal)
+	
+# White (#FFFFFF): Background of each expense entry row.
+
+# Gray (#D6D6D6): Month Pill Box Background
+
+# Accent Green (#34C759):
+	- Positive Amount Text of transaction entry row.
+	- Text of  Date Box if Amount is Positive.
+
+# Accent Red (#FF383C):
+	- Negative Amount Text of transaction entry row.
+	- Text of  Date Box if Amount is Negative.
+
+// Accessibility //
+
+# Black (#000000):
+	- Page Title (Accessibility)
+	- Text of Version Info Pill Box
+	- Text of the accessibility item (Dark Mode)
+	- Background of the toggle button.
+
+# White (#FFFFFF):
+	- Inner Circle of Toggle Button
+	- Background of Accessibility item (Dark Mode) Box and Logout Box.
+
+# Gray (#D6D6D6): Background of Version Info Pill Box.
+
+# Accent Red (#FF383C): Text (Logout) of Logout Box.
+
+
+//// DARK MODE ////
+
+App Background: #141414
+Nav Bar (Pill Shaped) Tray Background: #1B1B1B
+Nav Bar (Pill Shaped) Slider Background (Highlights the current page): #242527
+Nav Bar (Pill Shaped) Highlighted Icon: #FFFFFF
+Nav Bar (Pill Shaped) Other Page Icons: #717171
+
+*** Nav Bar (Pill Shaped) is only available in Dashboard, Expense Statement, Transaction Statement and Accessibility Pages ***
+
+// Sign Up, Login Page, Forgot Password Page, Verify Page and New Password Page //
+
+# White (#FFFFFF):
+	- Greeting Text (Signup: Let's Get Started; Login: Hey Welcome Back; Forgot Password: Forgot Password; Verify: Verify your email; New Password: Create New Password)
+	- Button Background (Signup, Login, Send Mail, Verify and Save)
+	- Google Text (Continue with Google)
+	- Login Text (Already have an account? Login); Signup Text (Don't have an account? Sign Up)
+
+# Dark Gray (#242527): Text Box background
+
+# Dark Gray (#717171): 
+	- Text Box text (Email Id, Password, Confirm Password, New Password)
+	- Info Text (We will send a code on your mail; Enter the 4 digit code sent to your mail; Resend Code; Forgot Password?; Don’t have an account?; Already have an account?)
+	- OR text and separator line in between Signup and Continue with Google.
+
+# Black (#000000): Button text (Sign up, Login, Send mail, Verify, Save)
+
+// Dashboard //
+
+# White (#FFFFFF):
+	- User Name (Arnab Banik)
+	- Add and Notification icon
+	- Rent Invoice Tab Title Text
+	- Month Text (May 2026)
+	- Month Bill (Tk. 7,418)
+	- Bill item title and Tab Title Text in Expense Summary Tab and Transaction Summary Tab; Bill amount in Expense Summary Tab items.
+	- Transactions and Expenses Text in Transactions and Expense Buttons that pop up when the Add icon is clicked.
+
+# White (#FFFFFF 75% opacity): Rent Invoice item text and amount
+
+# Gray (#757575): Rent Invoice items row separator.
+
+# Dark Gray (#1D1E20): 
+	- Rent Invoice, Expense Summary, Transaction Summary Tab Background.
+	- Background of Transactions and Expense Buttons that pop up when the Add icon is clicked.
+
+# Accent Red (#FF383C):
+	- Pending Button on Rent Invoice Tab
+	- Negative Amount
+
+# Accent Green (#34C759):
+	- Paid Button on Rent Invoice Tab
+	- Positive Amount
+
+// Add Expenses //
+
+# White (#FFFFFF):
+	- Page title
+	- Back Button Icon (Left Arrowhead)
+	- Save Button Icon (Check)
+	- Category item (Groceries) and Date item (10th May)
+	- All button Texts of the Calculator (+, ., -, /, 0, 1, 2 etc.)
+
+# White (#FFFFFF 50% opacity): Category and Date Title and Text that leads to "Add Expense Description" (Add more Details >) AND the line separating the calculator
+
+# White (#FFFFFF): Background of the number buttons in the calculator (0, 1, 2, etc.)
+
+# Gray (#3D3D3D): Background of the operator buttons in the calculator (+, -, ., /, etc.)
+
+// Add Expenses Description //
+
+# White (#FFFFFF):
+	- Page title
+	- Back Button Icon (Left Arrowhead)
+	- Save Button Icon (Check)
+	- Category item (Groceries) and Date item (10th May) [Text Box Input Text]
+	- Text Box Icon (to select date and show options icon)
+
+# White (#FFFFFF 50% opacity): Item Title (Date, Category, Description, Amount)
+
+# Dark Gray (#242527): Background of Text Box
+
+// Add Transaction (Lend) //
+
+# White (#FFFFFF):
+	- Page title
+	- Back Button Icon (Left Arrowhead)
+	- Save Button Icon (Check)
+	- Category item (Groceries) and Date item (10th May)
+	- All button Texts of the Calculator (+, ., -, /, 0, 1, 2 etc.)
+	- Pill Shaped Bar Highlighted text (Lend)
+
+# White (#FFFFFF 50% opacity): Person and Date Title and Text that leads to "Add Expense Description" (Add more Details >) AND the line separating the calculator
+
+# Dark Gray (#242527): 
+	- Background of the number buttons in the calculator (0, 1, 2, etc.)
+	- Pill Shaped Bar Highlighted portion Background
+
+# Dark Gray (#1B1B1B): Pill Shaped Bar Background
+
+# Dark Gray (#7B7B7B): Pill Shaped Bar unhighlighted text (Borrow)
+
+// Add Transaction (Borrow) //
+
+# White (#FFFFFF):
+	- Page title
+	- Back Button Icon (Left Arrowhead)
+	- Save Button Icon (Check)
+	- Category item (Groceries) and Date item (10th May)
+	- All button Texts of the Calculator (+, ., -, /, 0, 1, 2 etc.)
+	- Pill Shaped Bar Highlighted text (Borrow)
+
+# White (#FFFFFF 50% opacity): Person and Date Title and Text that leads to "Add Expense Description" (Add more Details >) AND the line separating the calculator
+
+# Dark Gray (#242527): 
+	- Background of the number buttons in the calculator (0, 1, 2, etc.)
+	- Pill Shaped Bar Highlighted portion Background
+
+# Dark Gray (#1B1B1B): Pill Shaped Bar Background
+
+# Dark Gray (#7B7B7B): Pill Shaped Bar unhighlighted text (Lend)
+
+// Add Transactions Description //
+
+# White (#FFFFFF):
+	- Page title
+	- Back Button Icon (Left Arrowhead)
+	- Save Button Icon (Check)
+	- Person item (Sadman) and Date item (10th May) [Text Box Input Text]
+	- Text Box Icon (to select date and show options icon)
+
+# White (#FFFFFF 50% opacity): Item Title (Date, Person, Description, Amount)
+
+# Dark Gray (#242527): Background of Text Box
+
+// Expense Statement //
+
+# White (#FFFFFF):
+	- Page Title (Expenses)
+	- Month Pill Box Text (May 2026)
+	- Add icon that navigates to add expenses page
+	- Category and description of each expense entry (Groceries / Miscellaneous; Aloo, Dim, Bread, Peyaj, Coffee, Chini, Tel, Chaal, Dal)
+	- Amount Text of each expense entry (Tk. 1500.00)
+	- Text of Date Box (1) if each expense entry row
+
+# Black (#000000): Date Box Background
+	
+# Dark Gray (#1D1E20): Background of each expense entry row.
+
+# Dark Gray (#474747): Month Pill Box Background
+
+// Transaction Statement //
+
+# White (#FFFFFF):
+	- Page Title (Transactions)
+	- Month Pill Box Text (May 2026)
+	- Add icon that navigates to add transactions page
+	- Date Box Background
+	- Person and description of each transaction entry (Sadman / Sabbir; Aloo, Dim, Bread, Peyaj, Coffee, Chini, Tel, Chaal, Dal)
+	
+# Dark Gray (#1D1E20): Background of each expense entry row.
+
+# Dark Gray (#474747): Month Pill Box Background
+
+# Accent Green (#34C759):
+	- Positive Amount Text of transaction entry row.
+	- Text of Date Box if Amount is Positive.
+
+# Accent Red (#FF383C):
+	- Negative Amount Text of transaction entry row.
+	- Text of Date Box if Amount is Negarive.
+
+// Accessibility //
+
+# White (#FFFFFF):
+	- Page Title (Accessibility)
+	- Text of Version Info Pill Box
+	- Text of the accessibility item (Dark Mode)
+	- Background of the toggle button.
+
+# Black (#000000): Inner Circle of Toggle Button
+
+# Dark Gray (#1D1E20): Background of Accessibility item (Dark Mode) Box and Logout Box.
+
+# Dark Gray (#474747): Background of Version Info Pill Box.
+
+# Accent Red (#FF383C): Text (Logout) of Logout Box.

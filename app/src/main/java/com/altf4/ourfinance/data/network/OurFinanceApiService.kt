@@ -6,7 +6,7 @@ import retrofit2.http.Query
 
 interface OurFinanceApiService {
 
-    @GET("macros/s/AKfycbyCkjx-7J6GUsE3MDO4RF8a16QLiKs4xzlSuvpDEqQrREBxVY_Bf6bZb6F6XFj3z3YN/exec")
+    @GET("macros/s/AKfycbwV50yokyFOsKFQddxWMk6GdB11lfPGIDWOtVFQiSWkwj6bbCDArlfd-a2N-HlW-04U/exec")
     suspend fun getDashboardData(
         @Query("user") username: String
     ): DashboardResponse

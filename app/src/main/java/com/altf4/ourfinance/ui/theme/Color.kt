@@ -20,8 +20,8 @@ val White50Opacity = Color(0x80FFFFFF)     // 50% Opacity White
 val White75Opacity = Color(0xBFFFFFFF)     // 75% Opacity White
 
 // Light Mode Specifics
-val AppBgLightHex = Color(0xFFF6F6F6)
-val NavTrayLightHex = Color(0xFFEBEBEB)
+val AppBgLightHex = Color(0xFFF0F0F0)
+val NavTrayLightHex = Color(0xFFE0E0E0)
 val LightGrayHintHex = Color(0xFFA9A9A9)
 val OperatorBtnLightHex = Color(0xFFD6D6D6)
 
@@ -34,6 +34,9 @@ val PillBoxDarkHex = Color(0xFF474747)
 val DarkGrayHintHex = Color(0xFF717171)
 val UnhighlightedTextDarkHex = Color(0xFF7B7B7B)
 val OperatorBtnDarkHex = Color(0xFF3D3D3D)
+
+val DashboardBtnBgLight = Color(0xFFEBEBEB)
+val DashboardBtnBgDark = Color(0xFF3E3E3E)
 
 
 // ==========================================

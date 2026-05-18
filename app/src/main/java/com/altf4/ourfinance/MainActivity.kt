@@ -1,47 +1,112 @@
 package com.altf4.ourfinance
 
 import android.os.Bundle
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import androidx.activity.viewModels
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
+import androidx.lifecycle.lifecycleScope
+import androidx.navigation.compose.rememberNavController
+import com.altf4.ourfinance.navigation.AppNavGraph
+import com.altf4.ourfinance.navigation.handleGoogleSignInResult
 import com.altf4.ourfinance.ui.theme.OurFinanceTheme
+import com.altf4.ourfinance.ui.viewmodel.DashboardViewModel
+import com.altf4.ourfinance.ui.viewmodel.AuthViewModel
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import kotlinx.coroutines.launch
+
 class MainActivity : ComponentActivity() {
+
+    private val dashboardViewModel: DashboardViewModel by viewModels()
+    private val authViewModel: AuthViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val credentialManager = CredentialManager.create(this)
+
         setContent {
-            // This is the starting point of your UI
             OurFinanceTheme {
-                ForgotpassScreen()
+                val navController = rememberNavController()
+                
+                AppNavGraph(
+                    navController = navController,
+                    dashboardViewModel = dashboardViewModel,
+                    authViewModel = authViewModel,
+                    onGoogleSignInRequested = {
+                        triggerGoogleSignIn(credentialManager) { email, displayName, photoUrl ->
+                            Log.d("AuthDebug", "Sign-in success for: $email")
+                            handleGoogleSignInResult(navController, authViewModel, email, displayName, photoUrl)
+                        }
+                    }
+                )
             }
         }
     }
-}
 
-// All UI code MUST be in a function with the @Composable tag
-@Composable
-fun MainScreenContent() {
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
+    private fun triggerGoogleSignIn(
+        credentialManager: CredentialManager,
+        onSuccess: (String, String?, String?) -> Unit
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "Our Finances",
-                color = MaterialTheme.colorScheme.onBackground,
-                style = MaterialTheme.typography.headlineMedium
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = { /* Action later */ }) {
-                Text("Test Button")
+        // This is the Client ID for the Web Application in Google Cloud Console
+        val webClientId = "460922006999-l14t1l1bvsh9luee806a9f6kvu24cjls.apps.googleusercontent.com"
+
+        val googleIdOption = GetGoogleIdOption.Builder()
+            .setFilterByAuthorizedAccounts(false)
+            .setServerClientId(webClientId)
+            .build()
+
+        val request = GetCredentialRequest.Builder()
+            .addCredentialOption(googleIdOption)
+            .build()
+
+        lifecycleScope.launch {
+            try {
+                Log.d("AuthDebug", "Starting Credential Manager request...")
+                val result = credentialManager.getCredential(
+                    context = this@MainActivity,
+                    request = request
+                )
+
+                val credential = result.credential
+                Log.d("AuthDebug", "Credential received. Type: ${credential.type}")
+
+                val googleIdTokenCredential = when {
+                    credential is GoogleIdTokenCredential -> credential
+                    credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL -> {
+                        GoogleIdTokenCredential.createFrom(credential.data)
+                    }
+                    else -> null
+                }
+
+                if (googleIdTokenCredential != null) {
+                    val email = googleIdTokenCredential.id
+                    val displayName = googleIdTokenCredential.displayName
+                    val profilePic = googleIdTokenCredential.profilePictureUri?.toString()
+
+                    Log.d("AuthDebug", "Google ID Token Email: $email")
+
+                    if (authViewModel.allowedEmails.contains(email.lowercase().trim())) {
+                        onSuccess(email, displayName, profilePic)
+                    } else {
+                        Log.w("AuthDebug", "Whitelist check failed for: $email")
+                        Toast.makeText(this@MainActivity, "Access Denied: $email is not whitelisted.", Toast.LENGTH_LONG).show()
+                    }
+                } else {
+                    Log.w("AuthDebug", "Received unexpected credential type: ${credential.type}")
+                    Toast.makeText(this@MainActivity, "Sign-in failed: Unexpected credential type", Toast.LENGTH_LONG).show()
+                }
+            } catch (e: Exception) {
+                Log.e("AuthError", "Credential Manager Error: ${e.message}", e)
+                val errorMessage = when (e.message) {
+                    "No credentials available" -> "No Google accounts found or configuration mismatch."
+                    else -> e.localizedMessage ?: "Unknown Error"
+                }
+                Toast.makeText(this@MainActivity, "Sign-in failed: $errorMessage", Toast.LENGTH_LONG).show()
             }
         }
     }

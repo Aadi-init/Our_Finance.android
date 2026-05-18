@@ -1,4 +1,4 @@
-package com.altf4.ourfinance
+package com.altf4.ourfinance.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -13,6 +13,9 @@ import androidx.compose.ui.unit.sp
 import com.altf4.ourfinance.ui.theme.OurFinanceTheme
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.material3.MaterialTheme
+import com.altf4.ourfinance.ui.DisplayText
+import com.altf4.ourfinance.ui.OtpBox
+import com.altf4.ourfinance.ui.SubmitButton
 
 @Composable
 fun VerifymailScreen() {

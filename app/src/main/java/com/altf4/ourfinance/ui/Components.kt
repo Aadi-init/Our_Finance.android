@@ -1,4 +1,4 @@
-package com.altf4.ourfinance
+package com.altf4.ourfinance.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,6 +20,20 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
+import com.altf4.ourfinance.R
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.*
+import androidx.compose.ui.draw.clip
+import androidx.compose.animation.core.spring
+import androidx.compose.ui.tooling.preview.Preview
+import android.content.res.Configuration
+import com.altf4.ourfinance.ui.theme.OurFinanceTheme
 
 @Composable
 fun CustomInputField(
@@ -109,23 +123,32 @@ fun OrSeparator() {
 fun GoogleButton(onClick: () -> Unit) {
     Button(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth().height(50.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(50.dp),
         shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-            contentColor = MaterialTheme.colorScheme.primary
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
         ),
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
+            // 100% Native icon. No external .png or .xml files required.
             Icon(
-                painter = painterResource(id = R.drawable.ic_google),
-                contentDescription = "Google Logo",
+                painter = painterResource(id = R.drawable.ic_google_logo),
+                contentDescription = "Account Logo",
                 modifier = Modifier.size(20.dp),
                 tint = Color.Unspecified
             )
+
             Spacer(modifier = Modifier.width(12.dp))
-            Text(text = "Continue with Google", fontSize = 16.sp, fontWeight = FontWeight.Medium)
+
+            Text(
+                text = "Continue with Google",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium
+            )
         }
     }
 }
@@ -200,4 +223,124 @@ fun OtpBox(
             fontWeight = FontWeight.Bold
         )
     )
+}
+
+// 1. Define the tabs with your exact custom XML drawable resources
+enum class NavScreen(val iconResId: Int, val contentDescription: String) {
+    Dashboard(R.drawable.ic_dashboard, "Dashboard"),
+    Expenses(R.drawable.ic_expenses, "Expenses"),
+    Settlement(R.drawable.ic_settlements, "Settlements"),
+    Accessibility(R.drawable.ic_accessibility, "Accessibility")
+}
+
+@Composable
+fun PillNavigationBar(
+    currentScreen: NavScreen,
+    onScreenSelected: (NavScreen) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    // 2. Automatically link to your theme.kt color assignments
+    val trayColor = MaterialTheme.colorScheme.surfaceContainerLow
+    val sliderColor = MaterialTheme.colorScheme.surfaceVariant
+    val selectedIconColor = MaterialTheme.colorScheme.primary
+    val unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant
+
+    val items = NavScreen.entries
+    val selectedIndex = currentScreen.ordinal
+
+    BoxWithConstraints(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(72.dp)
+            .padding(horizontal = 10.dp, vertical = 8.dp)
+            .clip(RoundedCornerShape(50))
+            .background(trayColor)
+            .padding(4.dp)
+    ) {
+        val totalWidth = maxWidth
+        val itemWidth = totalWidth / items.size
+
+        // Smooth spring physics slider transition
+        val animatedOffset by animateDpAsState(
+            targetValue = itemWidth * selectedIndex,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioLowBouncy,
+                stiffness = Spring.StiffnessLow
+            ),
+            label = "PillSliderOffset"
+        )
+
+        // Sliding background capsule
+        Box(
+            modifier = Modifier
+                .offset(x = animatedOffset)
+                .width(itemWidth)
+                .fillMaxHeight()
+                .clip(RoundedCornerShape(50))
+                .background(sliderColor)
+        )
+
+        // Interactive touch icons layer
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            items.forEach { screen ->
+                val isSelected = screen == currentScreen
+
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null // Removes standard circle ripple for a clean sliding look
+                        ) {
+                            onScreenSelected(screen)
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        // 3. Render your custom XML drawables using painterResource
+                        painter = painterResource(id = screen.iconResId),
+                        contentDescription = screen.contentDescription,
+                        modifier = Modifier.size(24.dp),
+                        tint = if (isSelected) selectedIconColor else unselectedIconColor
+                    )
+                }
+            }
+        }
+    }
+}
+
+
+@Preview(name = "Light Mode UI", showBackground = true)
+@Preview(
+    name = "Dark Mode UI",
+    showBackground = true,
+    uiMode = Configuration.UI_MODE_NIGHT_YES // Forces the design panel into dark mode
+)
+@Composable
+fun PillNavigationBarPreview() {
+    OurFinanceTheme {
+        // Keeps track of the active tab click state inside the preview canvas
+        var selectedScreen by remember { mutableStateOf(NavScreen.Dashboard) }
+
+        Surface(modifier = Modifier.fillMaxSize()) {
+            Scaffold(
+                bottomBar = {
+                    PillNavigationBar(
+                        currentScreen = selectedScreen,
+                        onScreenSelected = { selectedScreen = it }
+                    )
+                }
+            ) { paddingValues ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                )
+            }
+        }
+    }
 }

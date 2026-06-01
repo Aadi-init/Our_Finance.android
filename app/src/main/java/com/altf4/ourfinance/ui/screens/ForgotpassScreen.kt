@@ -64,15 +64,19 @@ fun ForgotpassScreen() {
 @Preview(showBackground = true, name = "Light Mode")
 @Composable
 fun ForgotpassPreviewLight() {
-    OurFinanceTheme(darkTheme = false) { // Forces Light Mode
+    OurFinanceTheme(darkTheme = false) {
         ForgotpassScreen()
     }
 }
 
-@Preview(showBackground = true, name = "Dark Mode")
+@Preview(
+    showBackground = true,
+    name = "Dark Mode",
+    uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES
+)
 @Composable
 fun ForgotpassPreviewDark() {
-    OurFinanceTheme(darkTheme = true) { // Forces Dark Mode
+    OurFinanceTheme(darkTheme = true) {
         ForgotpassScreen()
     }
 }

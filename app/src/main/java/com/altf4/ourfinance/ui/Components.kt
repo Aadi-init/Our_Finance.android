@@ -34,6 +34,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.ui.tooling.preview.Preview
 import android.content.res.Configuration
 import com.altf4.ourfinance.ui.theme.OurFinanceTheme
+import androidx.compose.foundation.shape.CircleShape
 
 @Composable
 fun CustomInputField(
@@ -240,8 +241,8 @@ fun PillNavigationBar(
     modifier: Modifier = Modifier
 ) {
     // 2. Automatically link to your theme.kt color assignments
-    val trayColor = MaterialTheme.colorScheme.surfaceContainerLow
-    val sliderColor = MaterialTheme.colorScheme.surfaceVariant
+    val trayColor = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.95f) // Translucent
+    val sliderColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f)
     val selectedIconColor = MaterialTheme.colorScheme.primary
     val unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant
 
@@ -252,8 +253,8 @@ fun PillNavigationBar(
         modifier = modifier
             .fillMaxWidth()
             .height(72.dp)
-            .padding(horizontal = 10.dp, vertical = 8.dp)
-            .clip(RoundedCornerShape(50))
+            .padding(horizontal = 10.dp, vertical = 5.dp)
+            .clip(RoundedCornerShape(30))
             .background(trayColor)
             .padding(4.dp)
     ) {
@@ -276,7 +277,7 @@ fun PillNavigationBar(
                 .offset(x = animatedOffset)
                 .width(itemWidth)
                 .fillMaxHeight()
-                .clip(RoundedCornerShape(50))
+                .clip(RoundedCornerShape(30))
                 .background(sliderColor)
         )
 
@@ -341,6 +342,106 @@ fun PillNavigationBarPreview() {
                         .padding(paddingValues)
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun SyncActionButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    containerColor: Color = MaterialTheme.colorScheme.outlineVariant,
+    contentColor: Color = MaterialTheme.colorScheme.onBackground
+) {
+    Box(
+        modifier = modifier
+            .size(32.dp)
+            .background(containerColor, CircleShape)
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.ic_refresh),
+            contentDescription = "Sync Data Database Pipeline",
+            tint = contentColor,
+            modifier = Modifier.size(20.dp)
+        )
+    }
+}
+
+@Composable
+fun ScaleableSwitch(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    scale: Float = 0.8f // Default to slightly smaller to match Figma vibe
+) {
+    val trackWidth = 48.dp * scale
+    val trackHeight = 24.dp * scale
+    val thumbSize = 20.dp * scale
+    val thumbPadding = 2.dp * scale
+
+    val animateThumbOffset by animateDpAsState(
+        targetValue = if (checked) (trackWidth - thumbSize - thumbPadding) else thumbPadding,
+        animationSpec = spring(dampingRatio = 0.75f, stiffness = Spring.StiffnessLow),
+        label = "ThumbOffset"
+    )
+
+    Box(
+        modifier = modifier
+            .width(trackWidth)
+            .height(trackHeight)
+            .clip(RoundedCornerShape(50))
+            .background(MaterialTheme.colorScheme.outlineVariant)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) { onCheckedChange(!checked) },
+        contentAlignment = Alignment.CenterStart
+    ) {
+        Box(
+            modifier = Modifier
+                .padding(start = animateThumbOffset)
+                .size(thumbSize)
+                .background(MaterialTheme.colorScheme.surface, CircleShape)
+        )
+    }
+}
+
+@Composable
+fun CustomTopBar(
+    title: String,
+    modifier: Modifier = Modifier,
+    navigationIcon: @Composable (() -> Unit)? = null,
+    actions: @Composable (RowScope.() -> Unit)? = null
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            .statusBarsPadding()
+            .padding(horizontal = 20.dp, vertical = 20.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (navigationIcon != null) {
+            navigationIcon()
+            Spacer(modifier = Modifier.width(16.dp))
+        }
+
+        Text(
+            text = title,
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.weight(1f)
+        )
+
+        if (actions != null) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                content = actions
+            )
         }
     }
 }

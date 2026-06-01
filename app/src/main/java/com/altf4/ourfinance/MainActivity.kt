@@ -6,6 +6,8 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.lifecycle.lifecycleScope
@@ -15,6 +17,10 @@ import com.altf4.ourfinance.navigation.handleGoogleSignInResult
 import com.altf4.ourfinance.ui.theme.OurFinanceTheme
 import com.altf4.ourfinance.ui.viewmodel.DashboardViewModel
 import com.altf4.ourfinance.ui.viewmodel.AuthViewModel
+import com.altf4.ourfinance.ui.viewmodel.ExpensesViewModel
+import com.altf4.ourfinance.ui.viewmodel.SettlementsViewModel
+import com.altf4.ourfinance.ui.viewmodel.AddExpenseViewModel
+import com.altf4.ourfinance.ui.viewmodel.ThemeViewModel
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import kotlinx.coroutines.launch
@@ -23,6 +29,10 @@ class MainActivity : ComponentActivity() {
 
     private val dashboardViewModel: DashboardViewModel by viewModels()
     private val authViewModel: AuthViewModel by viewModels()
+    private val expensesViewModel: ExpensesViewModel by viewModels()
+    private val settlementsViewModel: SettlementsViewModel by viewModels()
+    private val addExpenseViewModel: AddExpenseViewModel by viewModels()
+    private val themeViewModel: ThemeViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,13 +40,19 @@ class MainActivity : ComponentActivity() {
         val credentialManager = CredentialManager.create(this)
 
         setContent {
-            OurFinanceTheme {
+            val isDarkMode by themeViewModel.isDarkMode.collectAsState()
+
+            OurFinanceTheme(darkTheme = isDarkMode) {
                 val navController = rememberNavController()
                 
                 AppNavGraph(
                     navController = navController,
                     dashboardViewModel = dashboardViewModel,
                     authViewModel = authViewModel,
+                    expensesViewModel = expensesViewModel,
+                    settlementsViewModel = settlementsViewModel,
+                    addExpenseViewModel = addExpenseViewModel,
+                    themeViewModel = themeViewModel,
                     onGoogleSignInRequested = {
                         triggerGoogleSignIn(credentialManager) { email, displayName, photoUrl ->
                             Log.d("AuthDebug", "Sign-in success for: $email")

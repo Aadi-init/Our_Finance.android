@@ -22,16 +22,30 @@ private val DarkColorScheme = darkColorScheme(
     surfaceContainer = OperatorBtnDarkHex,           //#3d3d3d
 
     // For Nav Bar
-    surfaceContainerLow = NavTrayDarkHex,     // Tray Background #1B1B1B
+    surfaceContainerLow = NavBarTrayDark,     // Tray Background #1B1B1B
     surfaceVariant = TextBoxBackgroundDark,      // Slider Background #242527
     primary = PrimaryButtonBgDark,    // Highlighted Icon #FFFFFF
     onSurfaceVariant = TextHintDark,           // Unselected Icons #717171
 
     // Added For Dashboard Buttons
-    surfaceContainerHigh = DashboardBtnBgDark   //#3E3E3E
+    surfaceContainerHigh = DashboardBtnBgDark,   //#3E3E3E
+
+    surfaceContainerHighest = DashboardBtnBgDark,       //#3E3E3E
+
+    surfaceContainerLowest = White50Opacity,
+
+    outline = White40Opacity,        //#000000 40%
+
+    outlineVariant = RefreshBgDark,
+
+    surfaceTint = White75Opacity,
+
+    surfaceDim = SettlementTxtDark,
+
+    inverseOnSurface = SurfaceBackgroundDark
 )
 
-// Mapping your specific names to the system's "Light Mode"
+// Mapping your specific names to the system's "Light Mode"XX
 private val LightColorScheme = lightColorScheme(
              //#000000
     onPrimary = PrimaryButtonTextLight,         //#ffffff
@@ -46,13 +60,27 @@ private val LightColorScheme = lightColorScheme(
     surfaceContainer = OperatorBtnLightHex,           //#d6d6d6
 
     // For Nav Bar
-    surfaceContainerLow = NavTrayLightHex,     // Tray Background #E0E0E0
+    surfaceContainerLow = NavBarTrayLight,     // Tray Background #E0E0E0
     surfaceVariant = TextBoxBackgroundLight,      // Slider Background #FFFFFF
     primary = PrimaryButtonBgLight,    // Highlighted Icon #000000
     onSurfaceVariant = TextHintLight,           // Unselected Icons #A9A9A9
 
     // Added For Dashboard Buttons
-    surfaceContainerHigh = DashboardBtnBgLight  //#EBEBEB
+    surfaceContainerHigh = DashboardBtnBgLight,         //#EBEBEB
+
+    surfaceContainerHighest = NavBarTrayLight,           // #E0E0E0
+
+    surfaceContainerLowest = Black50Opacity,
+
+    outline = Black40Opacity,        //#FFFFFF 40%
+
+    outlineVariant = RefreshBgLight,
+
+    surfaceTint = Black75Opacity,
+
+    surfaceDim = SettlementTxtLight,
+
+    inverseOnSurface = DashboardBtnBgLight
 )
 
 @Composable

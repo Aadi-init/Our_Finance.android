@@ -110,3 +110,19 @@ fun SignupPreviewLight() {
         )
     }
 }
+
+@Preview(
+    showBackground = true,
+    name = "Dark Mode",
+    uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES
+)
+@Composable
+fun SignupPreviewDark() {
+    OurFinanceTheme(darkTheme = true) {
+        SignupScreen(
+            onSignupSuccess = {},
+            onGoogleSignInClick = {},
+            onNavigateToLogin = {}
+        )
+    }
+}

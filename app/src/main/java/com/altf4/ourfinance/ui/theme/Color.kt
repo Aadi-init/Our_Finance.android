@@ -16,8 +16,12 @@ val RowSeparatorGray = Color(0xFF757575)   // Rent Invoice separator (Both modes
 
 // Opacity Colors
 val Black50Opacity = Color(0x80000000)     // 50% Opacity Black
-val White50Opacity = Color(0x80FFFFFF)     // 50% Opacity White
+val Black40Opacity = Color(0x66000000)     // 40% Opacity Black
+val Black75Opacity = Color(0xBF000000)     // 75% Opacity Black
+val White50Opacity = Color(0x80FFFFFF)     // 50% Opacity WhiteX
 val White75Opacity = Color(0xBFFFFFFF)     // 75% Opacity White
+val White40Opacity = Color(0x66FFFFFF)     // 40% Opacity White
+
 
 // Light Mode Specifics
 val AppBgLightHex = Color(0xFFF0F0F0)
@@ -37,6 +41,11 @@ val OperatorBtnDarkHex = Color(0xFF3D3D3D)
 
 val DashboardBtnBgLight = Color(0xFFEBEBEB)
 val DashboardBtnBgDark = Color(0xFF3E3E3E)
+
+val RefreshBgLight = Color(0xFFCACACA)
+val SettlementTxtLight = Color(0xFFA0A0A0)
+val SettlementTxtDark = UnhighlightedTextDarkHex
+val RefreshBgDark = PillBoxDarkHex
 
 
 // ==========================================

@@ -205,7 +205,7 @@ fun DashboardContent(
         ) {
             Image(
                 painter = rememberAsyncImagePainter(
-                    model = currentUser.profilePictureUrl ?: "https://ui-avatars.com/api/?name=${data.fullName}&background=22C55E&color=fff"
+                    model = UserManager.getProfilePicture(currentUser.apiParamName)
                 ),
                 contentDescription = "Profile Picture",
                 contentScale = ContentScale.Crop,
@@ -668,13 +668,13 @@ fun RoommateAvatarStack(currentUser: String) {
         roommates.forEach { name ->
             Image(
                 painter = rememberAsyncImagePainter(
-                    model = "https://ui-avatars.com/api/?name=$name&background=3D3D3D&color=FFF&size=128"
+                    model = UserManager.getProfilePicture(name)
                 ),
                 contentDescription = "Roommate $name",
                 modifier = Modifier
                     .size(24.dp)
                     .clip(CircleShape)
-                    .border(2.dp, MaterialTheme.colorScheme.surface, CircleShape)
+                    //.border(2.dp, MaterialTheme.colorScheme.surface, CircleShape)
             )
         }
     }
@@ -863,4 +863,3 @@ fun NotificationPreviewDark() {
         }
     }
 }
-

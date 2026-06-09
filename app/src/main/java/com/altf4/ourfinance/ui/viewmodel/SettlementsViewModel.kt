@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.altf4.ourfinance.data.model.TransactionEntry
 import com.altf4.ourfinance.data.network.RetrofitClient
 import com.altf4.ourfinance.ui.state.SettlementsUiState
+import com.altf4.ourfinance.utils.UserManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -38,6 +39,10 @@ class SettlementsViewModel : ViewModel() {
 
             try {
                 val response = RetrofitClient.apiService.getSettlements(username = currentUser)
+
+                // Sync roommate profiles to UserManager
+                UserManager.syncUserProfiles(response.userProfiles)
+
                 allRawEntries = response.entries
                 updateFilteredState(currentUser, response)
             } catch (e: Exception) {
@@ -86,6 +91,9 @@ class SettlementsViewModel : ViewModel() {
         }
 
         val filteredEntries = filteredByDate.filter { entry ->
+            val isInvolved = entry.from == currentUser || entry.to == currentUser
+            if (!isInvolved) return@filter false
+
             val personMatch = if (_filterPerson.value == "All") true
             else entry.from == _filterPerson.value || entry.to == _filterPerson.value
 

@@ -242,7 +242,7 @@ fun PillNavigationBar(
 ) {
     // 2. Automatically link to your theme.kt color assignments
     val trayColor = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.95f) // Translucent
-    val sliderColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f)
+    val sliderColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
     val selectedIconColor = MaterialTheme.colorScheme.primary
     val unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant
 
@@ -252,9 +252,9 @@ fun PillNavigationBar(
     BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
-            .height(72.dp)
-            .padding(horizontal = 10.dp, vertical = 5.dp)
-            .clip(RoundedCornerShape(30))
+            .height(68.dp)
+            .padding(horizontal = 50.dp, vertical = 6.dp)  // horizontal 10
+            .clip(RoundedCornerShape(50))
             .background(trayColor)
             .padding(4.dp)
     ) {
@@ -277,7 +277,7 @@ fun PillNavigationBar(
                 .offset(x = animatedOffset)
                 .width(itemWidth)
                 .fillMaxHeight()
-                .clip(RoundedCornerShape(30))
+                .clip(RoundedCornerShape(50))
                 .background(sliderColor)
         )
 
@@ -289,7 +289,7 @@ fun PillNavigationBar(
             items.forEach { screen ->
                 val isSelected = screen == currentScreen
 
-                Box(
+                Column(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
@@ -299,14 +299,31 @@ fun PillNavigationBar(
                         ) {
                             onScreenSelected(screen)
                         },
-                    contentAlignment = Alignment.Center
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    //Pack items tightly with 1.dp spacing, centered as a single cluster
+                    verticalArrangement = Arrangement.Center
                 ) {
                     Icon(
                         // 3. Render your custom XML drawables using painterResource
                         painter = painterResource(id = screen.iconResId),
                         contentDescription = screen.contentDescription,
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(20.dp),
                         tint = if (isSelected) selectedIconColor else unselectedIconColor
+                    )
+
+                    //Spacer(modifier = Modifier.height(2.dp))
+
+                    Text(
+                        text = screen.contentDescription,
+                        fontSize = 7.sp, // Bumped slightly for crisp rendering
+                        lineHeight = 12.sp, // Force-collapses the text box baseline container height
+                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                        color = if (isSelected) selectedIconColor else unselectedIconColor,
+                        maxLines = 1,
+                        //modifier = Modifier
+                            // FORCE CORRECTION: Negative offset physically shifts the text up
+                            // towards the icon, ignoring font canvas metrics.
+                            //.offset(y = (-1).dp)
                     )
                 }
             }

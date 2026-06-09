@@ -8,5 +8,6 @@ data class SettlementsResponse(
     val totalReceived: Double,
     val toBeSettled: Double,
     val peerBalances: Map<String, Double>, // e.g., "Sadman" -> 691.0
-    val entries: List<TransactionEntry>
+    val entries: List<TransactionEntry>,
+    val userProfiles: Map<String, String>? = null
 )

@@ -256,37 +256,69 @@ fun SettlementsContent(
     onEntryClick: (TransactionEntry) -> Unit,
     bottomPadding: androidx.compose.ui.unit.Dp = 0.dp
 ) {
-    Column(modifier = Modifier.fillMaxSize().padding(horizontal = 10.dp)) {
-
-        Spacer(modifier = Modifier.height(15.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterPill(label = "Person :", value = filterPerson, options = listOf("All", "Arnab", "Sadman", "Sabbir").filter { it != currentUser.apiParamName || it == "All" }, onSelected = onPersonFilterChange)
-                FilterPill(label = "Type :", value = filterType, options = listOf("All", "Sent", "Received"), onSelected = onTypeFilterChange)
-            }
-
-            Box(
-                modifier = Modifier.size(30.dp).clip(CircleShape).background(MaterialTheme.colorScheme.outlineVariant).clickable { onAddSettlementClick() },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(painter = painterResource(id = R.drawable.ic_add), contentDescription = "Add", tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(18.dp))
-            }
-        }
-
-        Spacer(modifier = Modifier.height(15.dp))
-
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        // 1. SCROLLABLE SETTLEMENTS LIST (Occupies full space behind overlays)
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(10.dp),
-            contentPadding = PaddingValues(bottom = bottomPadding + 20.dp)
+            contentPadding = PaddingValues(
+                top = 60.dp, // Ensures top item starts below floating filter bar
+                bottom = bottomPadding + 20.dp, // Transparent scrolling behind navigation bar
+                start = 10.dp,
+                end = 10.dp
+            )
         ) {
             items(state.filteredEntries) { entry ->
                 TransactionItem(entry = entry, currentUserName = currentUser.apiParamName, onClick = { onEntryClick(entry) })
+            }
+        }
+
+        // 2. TRANSLUCENT FLOATING FILTER HEADER
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    color = MaterialTheme.colorScheme.background.copy(alpha = 0.85f) // Glassmorphic translucency
+                )
+                .padding(horizontal = 10.dp, vertical = 12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterPill(
+                        label = "Person :",
+                        value = filterPerson,
+                        options = listOf("All", "Arnab", "Sadman", "Sabbir").filter { it != currentUser.apiParamName || it == "All" },
+                        onSelected = onPersonFilterChange
+                    )
+                    FilterPill(
+                        label = "Type :",
+                        value = filterType,
+                        options = listOf("All", "Sent", "Received"),
+                        onSelected = onTypeFilterChange
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .size(30.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f))
+                        .clickable { onAddSettlementClick() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_add),
+                        contentDescription = "Add",
+                        tint = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
             }
         }
     }
@@ -305,14 +337,14 @@ fun FilterPill(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .clip(RoundedCornerShape(50))
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+            .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f))
             .clickable { expanded = true }
-            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .padding(horizontal = 12.dp, vertical = 4.dp)
     ) {
         Text(
             text = "$label ",
             fontSize = 12.sp,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
         )
         Text(
             text = value,
@@ -535,7 +567,6 @@ fun SettlementsPreviewLight() {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(bottom = paddingValues.calculateBottomPadding())
                 ) {
                     SettlementsHeader(
                         state = mockState,
@@ -545,16 +576,19 @@ fun SettlementsPreviewLight() {
                         onDateSelected = { _, _ -> },
                         onRefreshClick = {}
                     )
-                    SettlementsContent(
-                        state = mockState,
-                        currentUser = mockUser,
-                        filterPerson = "All",
-                        filterType = "All",
-                        onPersonFilterChange = {},
-                        onTypeFilterChange = {},
-                        onAddSettlementClick = {},
-                        onEntryClick = {}
-                    )
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        SettlementsContent(
+                            state = mockState,
+                            currentUser = mockUser,
+                            filterPerson = "All",
+                            filterType = "All",
+                            onPersonFilterChange = {},
+                            onTypeFilterChange = {},
+                            onAddSettlementClick = {},
+                            onEntryClick = {},
+                            bottomPadding = paddingValues.calculateBottomPadding()
+                        )
+                    }
                 }
             }
         }
@@ -614,7 +648,6 @@ fun SettlementsPreviewDark() {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(bottom = paddingValues.calculateBottomPadding())
                 ) {
                     SettlementsHeader(
                         state = mockState,
@@ -624,16 +657,19 @@ fun SettlementsPreviewDark() {
                         onDateSelected = { _, _ -> },
                         onRefreshClick = {}
                     )
-                    SettlementsContent(
-                        state = mockState,
-                        currentUser = mockUser,
-                        filterPerson = "All",
-                        filterType = "All",
-                        onPersonFilterChange = {},
-                        onTypeFilterChange = {},
-                        onAddSettlementClick = {},
-                        onEntryClick = {}
-                    )
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        SettlementsContent(
+                            state = mockState,
+                            currentUser = mockUser,
+                            filterPerson = "All",
+                            filterType = "All",
+                            onPersonFilterChange = {},
+                            onTypeFilterChange = {},
+                            onAddSettlementClick = {},
+                            onEntryClick = {},
+                            bottomPadding = paddingValues.calculateBottomPadding()
+                        )
+                    }
                 }
             }
         }

@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.altf4.ourfinance.data.model.ExpenseEntry
 import com.altf4.ourfinance.data.network.RetrofitClient
 import com.altf4.ourfinance.ui.state.ExpensesUiState
+import com.altf4.ourfinance.utils.UserManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -35,6 +36,10 @@ class ExpensesViewModel : ViewModel() {
 
             try {
                 val response = RetrofitClient.apiService.getExpenses(username = currentUser)
+
+                // Sync roommate profiles to UserManager
+                UserManager.syncUserProfiles(response.userProfiles)
+
                 allRawEntries = response.entries
                 updateFilteredState(currentUser)
             } catch (e: Exception) {
@@ -70,7 +75,7 @@ class ExpensesViewModel : ViewModel() {
         val userContribution = filteredByDate
             .filter { it.person == currentUser }
             .sumOf { it.amount }
-        
+
         val individualShare = totalExpense / 3.0
         val toBeAdjusted = individualShare - userContribution
 

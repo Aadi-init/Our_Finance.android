@@ -141,6 +141,7 @@ fun ExpensesScreenContent(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+            // NOTE: bottomPadding is NOT set here. This allows the List layout to scroll seamlessly behind the translucent navigation bar!
         ) {
             ExpensesHeader(
                 state = uiState,
@@ -156,7 +157,7 @@ fun ExpensesScreenContent(
                 onFilterChange = onFilterChange,
                 onAddExpenseClick = onAddExpenseClick,
                 onEntryClick = onEntryClick,
-                bottomPadding = paddingValues.calculateBottomPadding()
+                bottomPadding = paddingValues.calculateBottomPadding() // Passed to safely offset lists inside content padding
             )
         }
     }
@@ -290,75 +291,20 @@ fun ExpensesContent(
     onEntryClick: (ExpenseEntry) -> Unit,
     bottomPadding: androidx.compose.ui.unit.Dp = 0.dp
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 10.dp)
+    // Overlapping Box allows ledger cards to scroll seamlessly behind BOTH the filter bar AND the bottom bar
+    Box(
+        modifier = Modifier.fillMaxSize()
     ) {
-        Spacer(modifier = Modifier.height(20.dp))
-
-        var expanded by remember { mutableStateOf(false) }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.clickable { expanded = true }
-            ) {
-                Text(
-                    text = filterType,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Icon(
-                    imageVector = Icons.Default.ArrowDropDown,
-                    contentDescription = "Filter",
-                    tint = MaterialTheme.colorScheme.onBackground
-                )
-                DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                    DropdownMenuItem(
-                        text = { Text("Your Entries") },
-                        onClick = {
-                            onFilterChange("Your Entries")
-                            expanded = false
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("All Entries") },
-                        onClick = {
-                            onFilterChange("All Entries")
-                            expanded = false
-                        }
-                    )
-                }
-            }
-
-            Box(
-                modifier = Modifier
-                    .size(30.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.outlineVariant)
-                    .clickable { onAddExpenseClick() },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_add),
-                    contentDescription = "Add Expenses",
-                    tint = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.size(18.dp)
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
-
+        // 1. SCROLLABLE LEDGER LIST (Passes full screen height behind floating elements)
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(10.dp),
-            contentPadding = PaddingValues(bottom = bottomPadding + 20.dp)
+            contentPadding = PaddingValues(
+                top = 55.dp, // Comfortably leaves space so first card starts below the floating filter bar
+                bottom = bottomPadding + 20.dp, // Content flows behind the navigation bar but offsets selection beautifully
+                start = 10.dp,
+                end = 10.dp
+            )
         ) {
             items(state.filteredEntries) { entry ->
                 ExpenseItem(
@@ -366,6 +312,72 @@ fun ExpensesContent(
                     currentUserName = currentUser.apiParamName,
                     onClick = { onEntryClick(entry) }
                 )
+            }
+        }
+
+        // 2. TRANSLUCENT FLOATING HEADER (Overlaying at the top of the content box)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    color = MaterialTheme.colorScheme.background.copy(alpha = 0.85f) // Smooth, glassmorphic translucency
+                )
+                .padding(start = 12.dp, end = 12.dp, top = 12.dp, bottom = 12.dp)
+        ) {
+            var expanded by remember { mutableStateOf(false) }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable { expanded = true }
+                ) {
+                    Text(
+                        text = filterType,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                    Icon(
+                        imageVector = Icons.Default.ArrowDropDown,
+                        contentDescription = "Filter",
+                        tint = MaterialTheme.colorScheme.onBackground
+                    )
+                    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                        DropdownMenuItem(
+                            text = { Text("Your Entries") },
+                            onClick = {
+                                onFilterChange("Your Entries")
+                                expanded = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("All Entries") },
+                            onClick = {
+                                onFilterChange("All Entries")
+                                expanded = false
+                            }
+                        )
+                    }
+                }
+
+                Box(
+                    modifier = Modifier
+                        .size(30.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f))
+                        .clickable { onAddExpenseClick() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_add),
+                        contentDescription = "Add Expenses",
+                        tint = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
             }
         }
     }
@@ -419,7 +431,7 @@ fun ExpenseItem(
                         .clip(CircleShape),
                     contentScale = ContentScale.Crop
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(6.dp))
                 Text(
                     text = if (entry.person == currentUserName) "You" else entry.person,
                     fontWeight = FontWeight.Bold,

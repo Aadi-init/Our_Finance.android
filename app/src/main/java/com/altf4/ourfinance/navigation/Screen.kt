@@ -2,7 +2,6 @@ package com.altf4.ourfinance.navigation
 
 sealed class Screen(val route: String) {
     object Login : Screen("login")
-    object SignUp : Screen("signup")
     object Dashboard : Screen("dashboard")
     object ForgotPassword : Screen("forgot_password")
     object VerifyEmail : Screen("verify_email")
@@ -17,4 +16,5 @@ sealed class Screen(val route: String) {
     object AddSettlementForm : Screen("add_settlement_form")
     object EditSettlementEntry : Screen("edit_settlement_entry")
     object Accessibility : Screen("accessibility")
+    object About : Screen("about")
 }

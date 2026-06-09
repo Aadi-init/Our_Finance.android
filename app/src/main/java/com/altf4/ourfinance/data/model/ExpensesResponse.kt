@@ -7,5 +7,6 @@ data class ExpensesResponse(
     val totalExpense: Double,
     val userContribution: Double,
     val toBeAdjusted: Double,
-    val entries: List<ExpenseEntry>
+    val entries: List<ExpenseEntry>,
+    val userProfiles: Map<String, String>? = null // Dynamic CDN Mapping Cache Injection
 )

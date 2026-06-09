@@ -22,7 +22,8 @@ val MockDashboardData = DashboardResponse(
     contributions = 30400.0,
     balance = (30400.0 / 3.0) - 10133.33,
     settlement = 0.0,
-    invoiceBreakdown = MockRentInvoiceBreakdown
+    invoiceBreakdown = MockRentInvoiceBreakdown,
+    userProfiles = null
 )
 
 val MockGoogleUser = GoogleUser(

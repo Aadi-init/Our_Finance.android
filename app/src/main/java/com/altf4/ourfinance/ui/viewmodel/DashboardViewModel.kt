@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.altf4.ourfinance.data.model.NotificationItem
 import com.altf4.ourfinance.data.network.RetrofitClient
 import com.altf4.ourfinance.ui.state.DashboardUiState
+import com.altf4.ourfinance.utils.UserManager
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -43,28 +44,34 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
             try {
                 // Fetch dashboard data
                 val dashboardResponse = RetrofitClient.apiService.getDashboardData(username)
-                
+
+                // Sync any incoming user profiles to UserManager
+                UserManager.syncUserProfiles(dashboardResponse.userProfiles)
+
                 // Fetch expenses to calculate real-time totals for the current month
                 val expensesResponse = RetrofitClient.apiService.getExpenses(username = username)
-                
+
+                // Also sync profiles from expenses response if available
+                UserManager.syncUserProfiles(expensesResponse.userProfiles)
+
                 val calendar = Calendar.getInstance()
                 val currentMonth = calendar.get(Calendar.MONTH)
                 val currentYear = calendar.get(Calendar.YEAR)
-                
+
                 val currentMonthExpenses = expensesResponse.entries.filter { entry ->
                     val entryDate = parseTimestamp(entry.timestamp)
                     val cal = Calendar.getInstance().apply { time = entryDate }
                     cal.get(Calendar.MONTH) == currentMonth && cal.get(Calendar.YEAR) == currentYear
                 }
-                
+
                 val totalExpense = currentMonthExpenses.sumOf { it.amount }
                 val userContribution = currentMonthExpenses
                     .filter { it.person.equals(username, ignoreCase = true) }
                     .sumOf { it.amount }
-                
+
                 val individualShare = totalExpense / 3.0
                 val balance = individualShare - userContribution
-                
+
                 // Update response with calculated values for current month
                 val updatedResponse = dashboardResponse.copy(
                     yourExpense = userContribution,

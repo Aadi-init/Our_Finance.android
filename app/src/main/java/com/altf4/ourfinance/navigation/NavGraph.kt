@@ -10,7 +10,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.altf4.ourfinance.ui.screens.LoginScreen
-import com.altf4.ourfinance.ui.screens.SignupScreen
 import com.altf4.ourfinance.ui.screens.DashboardScreen
 import com.altf4.ourfinance.data.model.GoogleUser
 import com.altf4.ourfinance.ui.viewmodel.DashboardViewModel
@@ -32,6 +31,7 @@ import com.altf4.ourfinance.ui.state.SettlementsUiState
 import com.altf4.ourfinance.ui.viewmodel.SettlementsViewModel
 import com.altf4.ourfinance.ui.viewmodel.ThemeViewModel
 import com.altf4.ourfinance.ui.screens.AccessibilityScreen
+import com.altf4.ourfinance.ui.screens.AboutScreen
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import android.widget.Toast
@@ -62,10 +62,10 @@ fun AppNavGraph(
         if (authenticatedUser != null) {
             val currentRoute = navController.currentBackStackEntry?.destination?.route
             // Only navigate if we are currently on an auth screen or at start
-            if (currentRoute == Screen.Login.route || currentRoute == Screen.SignUp.route || currentRoute == null) {
+            if (currentRoute == Screen.Login.route || currentRoute == null) {
                 Log.d("AuthDebug", "User signed in. Navigating to Dashboard.")
                 navController.navigate(Screen.Dashboard.route) {
-                    popUpTo(Screen.SignUp.route) { inclusive = true }
+                    popUpTo(navController.graph.startDestinationId) { inclusive = true }
                     launchSingleTop = true
                 }
             }
@@ -74,54 +74,18 @@ fun AppNavGraph(
 
     NavHost(
         navController = navController,
-        startDestination = Screen.SignUp.route,
+        startDestination = Screen.Login.route,
         modifier = modifier
     ) {
-        // --- SIGN UP SCREEN ---
-        composable(Screen.SignUp.route) {
-            SignupScreen(
-                onSignupSuccess = { email ->
-                    Log.d("AuthDebug", "Manual signup attempt: $email")
-                    if (authViewModel.allowedEmails.contains(email.lowercase().trim())) {
-                        val user = GoogleUser(
-                            displayName = email.split("@").firstOrNull(),
-                            email = email,
-                            profilePictureUrl = null,
-                            apiParamName = authViewModel.getApiParamName(email)
-                        )
-                        authViewModel.setAuthenticatedUser(user)
-                    } else {
-                        Log.w("AuthDebug", "Manual signup denied: $email")
-                    }
-                },
-                onGoogleSignInClick = onGoogleSignInRequested,
-                onNavigateToLogin = {
-                    navController.navigate(Screen.Login.route)
-                }
-            )
-        }
-
         // --- LOGIN SCREEN ---
         composable(Screen.Login.route) {
+            val context = LocalContext.current
             LoginScreen(
+                authViewModel = authViewModel,
                 onLoginSuccess = { email ->
-                    Log.d("AuthDebug", "Manual login attempt: $email")
-                    if (authViewModel.allowedEmails.contains(email.lowercase().trim())) {
-                        val user = GoogleUser(
-                            displayName = email.split("@").firstOrNull(),
-                            email = email,
-                            profilePictureUrl = null,
-                            apiParamName = authViewModel.getApiParamName(email)
-                        )
-                        authViewModel.setAuthenticatedUser(user)
-                    }
+                    Log.d("AuthDebug", "Manual login success for: $email")
                 },
                 onGoogleSignInClick = onGoogleSignInRequested,
-                onNavigateToSignup = {
-                    navController.navigate(Screen.SignUp.route) {
-                        popUpTo(Screen.Login.route) { inclusive = true }
-                    }
-                },
                 onForgotPasswordClick = {
                     // navController.navigate(Screen.ForgotPassword.route)
                 }
@@ -175,7 +139,6 @@ fun AppNavGraph(
                         navController.navigate(Screen.AddExpense.route)
                     },
                     onEntryClick = { entry ->
-                        // Pass ID to fetch/show details
                         navController.navigate("${Screen.EditExpenseEntry.route}/${entry.id}")
                     }
                 )
@@ -238,10 +201,8 @@ fun AppNavGraph(
                 addExpenseViewModel.saveResult.collect { result ->
                     result.onSuccess {
                         Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
-                        // Pop back to the screen that initiated the 'Add Settlement' flow
                         navController.popBackStack(Screen.AddSettlement.route, inclusive = true)
-                        
-                        // Refresh data
+
                         dashboardViewModel.fetchDashboardData(authenticatedUser?.apiParamName ?: "")
                         settlementsViewModel.fetchSettlements(authenticatedUser?.apiParamName ?: "")
                     }.onFailure {
@@ -264,7 +225,7 @@ fun AppNavGraph(
                     onSaveClick = { finalAmount, finalType, finalPerson, finalTimestamp, description ->
                         val fromUser = if (finalType == "Sent") user.apiParamName else finalPerson
                         val toUser = if (finalType == "Sent") finalPerson else user.apiParamName
-                        
+
                         addExpenseViewModel.addSettlement(
                             username = user.apiParamName,
                             from = fromUser,
@@ -367,10 +328,8 @@ fun AppNavGraph(
                 addExpenseViewModel.saveResult.collect { result ->
                     result.onSuccess {
                         Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
-                        // Pop back to the screen that initiated the 'Add Expense' flow
                         navController.popBackStack(Screen.AddExpense.route, inclusive = true)
 
-                        // Refresh data
                         dashboardViewModel.fetchDashboardData(authenticatedUser?.apiParamName ?: "")
                         expensesViewModel.fetchExpenses(authenticatedUser?.apiParamName ?: "")
                     }.onFailure {
@@ -409,8 +368,7 @@ fun AppNavGraph(
         ) { backStackEntry ->
             val context = LocalContext.current
             val id = backStackEntry.arguments?.getString("id")
-            
-            // Find the entry in the existing list
+
             val entriesState by expensesViewModel.uiState.collectAsState()
             val entry = entriesState.allEntries.find { it.id == id }
 
@@ -421,7 +379,6 @@ fun AppNavGraph(
                     result.onSuccess {
                         Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
                         navController.popBackStack()
-                        // Refresh data
                         dashboardViewModel.fetchDashboardData(authenticatedUser?.apiParamName ?: "")
                         expensesViewModel.fetchExpenses(authenticatedUser?.apiParamName ?: "")
                     }.onFailure {
@@ -443,7 +400,7 @@ fun AppNavGraph(
                             val now = SimpleDateFormat("d MMMM yyyy, hh:mm a", Locale.US).format(Date())
                             addExpenseViewModel.updateExpense(
                                 id = entry.id,
-                                username = person, // New person assigned
+                                username = person,
                                 amount = finalAmount,
                                 category = finalCategory,
                                 timestamp = finalTimestamp,
@@ -463,6 +420,7 @@ fun AppNavGraph(
                 AccessibilityScreen(
                     currentUser = user,
                     themeViewModel = themeViewModel,
+                    authViewModel = authViewModel,
                     navController = navController,
                     onLogoutClick = {
                         authViewModel.logout()
@@ -473,29 +431,26 @@ fun AppNavGraph(
                 )
             }
         }
+
+        // --- ABOUT SCREEN ---
+        composable(Screen.About.route) {
+            AboutScreen(
+                onBackClick = {
+                    navController.popBackStack()
+                }
+            )
+        }
     }
 }
 
-/**
- * Helper function to handle the logic of verifying a Google User.
- */
 fun handleGoogleSignInResult(
     navController: NavHostController,
     authViewModel: AuthViewModel,
     email: String,
     displayName: String?,
-    photoUrl: String?
+    photoUrl: String?,
+    context: android.content.Context
 ) {
     Log.d("AuthDebug", "handleGoogleSignInResult for: $email")
-    if (authViewModel.allowedEmails.contains(email.lowercase().trim())) {
-        val user = GoogleUser(
-            displayName = displayName ?: email.split("@").firstOrNull(),
-            email = email,
-            profilePictureUrl = photoUrl,
-            apiParamName = authViewModel.getApiParamName(email)
-        )
-        authViewModel.setAuthenticatedUser(user)
-    } else {
-        Log.w("AuthDebug", "Google sign-in email not whitelisted: $email")
-    }
+    authViewModel.handleGoogleLogin(email, displayName, photoUrl, context)
 }

@@ -11,5 +11,6 @@ data class DashboardResponse(
     val contributions: Double,
     val balance: Double,
     val settlement: Double,
-    val invoiceBreakdown: RentInvoiceBreakdown
+    val invoiceBreakdown: RentInvoiceBreakdown,
+    val userProfiles: Map<String, String>? = null // Dynamic CDN Mapping Cache Injection
 )

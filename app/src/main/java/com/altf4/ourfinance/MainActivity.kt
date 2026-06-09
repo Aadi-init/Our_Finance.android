@@ -1,5 +1,6 @@
 package com.altf4.ourfinance
 
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -21,6 +22,7 @@ import com.altf4.ourfinance.ui.viewmodel.ExpensesViewModel
 import com.altf4.ourfinance.ui.viewmodel.SettlementsViewModel
 import com.altf4.ourfinance.ui.viewmodel.AddExpenseViewModel
 import com.altf4.ourfinance.ui.viewmodel.ThemeViewModel
+import com.altf4.ourfinance.utils.IconSwitcher
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import kotlinx.coroutines.launch
@@ -37,8 +39,19 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val credentialManager = CredentialManager.create(this)
+        // Retrieve your saved preference values cleanly
+        val sharedPrefs = getSharedPreferences("OurFinancePrefs", Context.MODE_PRIVATE)
+        val isDynamicIconOn = sharedPrefs.getBoolean("dynamic_icon_enabled", false)
+        val isDarkMode = sharedPrefs.getBoolean("is_dark_mode", true) // Default true
 
+        // Sync active system component configuration flags right at boot
+        IconSwitcher.updateAppIcon(this, isDynamicIconOn, isDarkMode)
+
+        // Sync ViewModel state
+        themeViewModel.syncWithPreferences(isDarkMode, isDynamicIconOn)
+
+        val credentialManager = CredentialManager.create(this)
+        
         setContent {
             val isDarkMode by themeViewModel.isDarkMode.collectAsState()
 
@@ -56,12 +69,23 @@ class MainActivity : ComponentActivity() {
                     onGoogleSignInRequested = {
                         triggerGoogleSignIn(credentialManager) { email, displayName, photoUrl ->
                             Log.d("AuthDebug", "Sign-in success for: $email")
-                            handleGoogleSignInResult(navController, authViewModel, email, displayName, photoUrl)
+                            handleGoogleSignInResult(navController, authViewModel, email, displayName, photoUrl, this@MainActivity)
                         }
                     }
                 )
             }
         }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        // Sync active system component configuration flags when the user leaves the app.
+        // This avoids the jarring process kill while the user is interacting with the settings.
+        val sharedPrefs = getSharedPreferences("OurFinancePrefs", Context.MODE_PRIVATE)
+        val isDynamicIconOn = sharedPrefs.getBoolean("dynamic_icon_enabled", false)
+        val isDarkMode = sharedPrefs.getBoolean("is_dark_mode", true)
+        
+        IconSwitcher.updateAppIcon(this, isDynamicIconOn, isDarkMode)
     }
 
     private fun triggerGoogleSignIn(

@@ -10,7 +10,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
@@ -152,236 +151,247 @@ fun EditexpenseentryScreen(
             )
         }
     ) { paddingValues ->
-        Column(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // --- A. DATE PICKER FIELD ---
-            FormField(label = "Date") {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .clickable(enabled = !isSaving && canEdit) {
-                            DatePickerDialog(
-                                context,
-                                { _, year, month, day ->
-                                    selectedDate = Calendar.getInstance().apply {
-                                        set(year, month, day)
-                                    }
-                                },
-                                selectedDate.get(Calendar.YEAR),
-                                selectedDate.get(Calendar.MONTH),
-                                selectedDate.get(Calendar.DAY_OF_MONTH)
-                            ).show()
-                        }
-                        .padding(horizontal = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = dateFormatter.format(selectedDate.time),
-                        color = if (canEdit) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                        fontSize = 16.sp
-                    )
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_calendar),
-                        contentDescription = "Select Date",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-            }
+            val screenHeight = maxHeight
+            val isSmallScreen = screenHeight < 600.dp
 
-            // --- B. TWO-COLUMN ROW: CATEGORY & PERSON ---
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 12.dp, vertical = if (isSmallScreen) 10.dp else 20.dp),
+                verticalArrangement = Arrangement.spacedBy(if (isSmallScreen) 8.dp else 12.dp)
             ) {
-                // Category Dropdown
-                FormField(label = "Category", modifier = Modifier.weight(1f)) {
-                    Box {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(56.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(MaterialTheme.colorScheme.surfaceVariant)
-                                .clickable(enabled = !isSaving && canEdit) { isCategoryDropdownExpanded = true }
-                                .padding(horizontal = 16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = category,
-                                color = if (canEdit) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                                fontSize = 16.sp
-                            )
-                            Icon(
-                                imageVector = Icons.Default.ArrowDropDown,
-                                contentDescription = "Dropdown",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        DropdownMenu(
-                            expanded = isCategoryDropdownExpanded,
-                            onDismissRequest = { isCategoryDropdownExpanded = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("Groceries") },
-                                onClick = {
-                                    category = "Groceries"
-                                    isCategoryDropdownExpanded = false
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Miscellaneous") },
-                                onClick = {
-                                    category = "Miscellaneous"
-                                    isCategoryDropdownExpanded = false
-                                }
-                            )
-                        }
+                // --- A. DATE PICKER FIELD ---
+                FormField(label = "Date") { //, modifier = Modifier.weight(1f)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight(0.08f)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .clickable(enabled = !isSaving && canEdit) {
+                                DatePickerDialog(
+                                    context,
+                                    { _, year, month, day ->
+                                        selectedDate = Calendar.getInstance().apply {
+                                            set(year, month, day)
+                                        }
+                                    },
+                                    selectedDate.get(Calendar.YEAR),
+                                    selectedDate.get(Calendar.MONTH),
+                                    selectedDate.get(Calendar.DAY_OF_MONTH)
+                                ).show()
+                            }
+                            .padding(horizontal = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = dateFormatter.format(selectedDate.time),
+                            color = if (canEdit) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_calendar),
+                            contentDescription = "Select Date",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(24.dp)
+                        )
                     }
                 }
 
-                // Person Field (Editable ONLY if user created it)
-                FormField(label = "Person", modifier = Modifier.weight(1f)) {
-                    Box {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(56.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(MaterialTheme.colorScheme.surfaceVariant)
-                                .clickable(enabled = !isSaving && canEdit) { isPersonDropdownExpanded = true }
-                                .padding(horizontal = 16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            Image(
-                                painter = rememberAsyncImagePainter(
-                                    model = UserManager.getProfilePicture(person)
-                                ),
-                                contentDescription = "User Avatar",
+                // --- B. TWO-COLUMN ROW: CATEGORY & PERSON ---
+                Row(
+                    modifier = Modifier.fillMaxWidth(),     //.weight(1f),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // Category Dropdown
+                    FormField(label = "Category", modifier = Modifier.weight(1f)) {
+                        Box {
+                            Row(
                                 modifier = Modifier
-                                    .size(24.dp)
-                                    .clip(CircleShape),
-                                contentScale = ContentScale.Crop
-                            )
-                            Text(
-                                text = if (person == currentUser.apiParamName) "You" else person,
-                                color = if (canEdit) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                                fontSize = 16.sp,
-                                modifier = Modifier.weight(1f)
-                            )
-                            if (canEdit) {
+                                    .fillMaxWidth()
+                                    .fillMaxHeight(0.09f)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                                    .clickable(enabled = !isSaving && canEdit) { isCategoryDropdownExpanded = true }
+                                    .padding(horizontal = 16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = category,
+                                    color = if (canEdit) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
                                 Icon(
                                     imageVector = Icons.Default.ArrowDropDown,
                                     contentDescription = "Dropdown",
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
-                        }
-                        DropdownMenu(
-                            expanded = isPersonDropdownExpanded,
-                            onDismissRequest = { isPersonDropdownExpanded = false }
-                        ) {
-                            listOf("Arnab", "Sadman", "Sabbir").forEach { name ->
+                            DropdownMenu(
+                                expanded = isCategoryDropdownExpanded,
+                                onDismissRequest = { isCategoryDropdownExpanded = false }
+                            ) {
                                 DropdownMenuItem(
-                                    text = { Text(if (name == currentUser.apiParamName) "You" else name) },
+                                    text = { Text("Groceries", style = MaterialTheme.typography.bodyMedium) },
                                     onClick = {
-                                        person = name
-                                        isPersonDropdownExpanded = false
+                                        category = "Groceries"
+                                        isCategoryDropdownExpanded = false
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Miscellaneous", style = MaterialTheme.typography.bodyMedium) },
+                                    onClick = {
+                                        category = "Miscellaneous"
+                                        isCategoryDropdownExpanded = false
                                     }
                                 )
                             }
                         }
                     }
-                }
-            }
 
-            // --- C. AMOUNT FIELD ---
-            FormField(label = "Amount") {
-                TextField(
-                    value = amount,
-                    onValueChange = {
-                        if (canEdit) {
-                            handleAmountChange(it)
-                            amountError = false
+                    // Person Field (Editable ONLY if user created it)
+                    FormField(label = "Person", modifier = Modifier.weight(1f)) {
+                        Box {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .fillMaxHeight(0.09f)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                                    .clickable(enabled = !isSaving && canEdit) { isPersonDropdownExpanded = true }
+                                    .padding(horizontal = 16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Image(
+                                    painter = rememberAsyncImagePainter(
+                                        model = UserManager.getProfilePicture(person)
+                                    ),
+                                    contentDescription = "User Avatar",
+                                    modifier = Modifier
+                                        .size(if (isSmallScreen) 20.dp else 24.dp)
+                                        .clip(CircleShape),
+                                    contentScale = ContentScale.Crop
+                                )
+                                Text(
+                                    text = if (person == currentUser.apiParamName) "You" else person,
+                                    color = if (canEdit) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                if (canEdit) {
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowDropDown,
+                                        contentDescription = "Dropdown",
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                            DropdownMenu(
+                                expanded = isPersonDropdownExpanded,
+                                onDismissRequest = { isPersonDropdownExpanded = false }
+                            ) {
+                                listOf("Arnab", "Sadman", "Sabbir").forEach { name ->
+                                    DropdownMenuItem(
+                                        text = { Text(if (name == currentUser.apiParamName) "You" else name, style = MaterialTheme.typography.bodyMedium) },
+                                        onClick = {
+                                            person = name
+                                            isPersonDropdownExpanded = false
+                                        }
+                                    )
+                                }
+                            }
                         }
-                    },
-                    readOnly = !canEdit,
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = !isSaving,
-                    isError = amountError,
-                    shape = RoundedCornerShape(12.dp),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        focusedTextColor = MaterialTheme.colorScheme.onBackground,
-                        unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
-                    ),
-                    prefix = {
-                        Text(
-                            text = "Tk. ",
-                            color = MaterialTheme.colorScheme.onBackground,
-                            fontSize = 16.sp
-                        )
-                    },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    textStyle = LocalTextStyle.current.copy(fontSize = 16.sp)
-                )
-            }
+                    }
+                }
 
-            // --- D. DESCRIPTION FIELD ---
-            FormField(label = "Description") {
-                TextField(
-                    value = description,
-                    onValueChange = { if (canEdit) description = it },
-                    readOnly = !canEdit,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(140.dp),
-                    enabled = !isSaving,
-                    shape = RoundedCornerShape(12.dp),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        focusedTextColor = MaterialTheme.colorScheme.onBackground,
-                        unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
-                    ),
-                    placeholder = {
-                        Text(
-                            text = "Add description",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                            fontSize = 14.sp
-                        )
-                    },
-                    textStyle = LocalTextStyle.current.copy(fontSize = 16.sp)
-                )
-            }
-
-            // --- E. EDIT HISTORY SECTION ---
-            if (entry.editCredential.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(8.dp))
-                entry.editCredential.forEach { history ->
-                    EditHistoryItem(
-                        history = history,
-                        currentUserName = currentUser.apiParamName,
-                        currentUserDisplayName = currentUser.displayName ?: ""
+                // --- C. AMOUNT FIELD ---
+                FormField(label = "Amount") {    //, modifier = Modifier.weight(1f)
+                    TextField(
+                        value = amount,
+                        onValueChange = {
+                            if (canEdit) {
+                                handleAmountChange(it)
+                                amountError = false
+                            }
+                        },
+                        readOnly = !canEdit,
+                        modifier = Modifier.fillMaxWidth().fillMaxHeight(0.115f),
+                        enabled = !isSaving,
+                        isError = amountError,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent
+                        ),
+                        prefix = {
+                            Text(
+                                text = "Tk. ",
+                                color = MaterialTheme.colorScheme.onBackground,
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        textStyle = MaterialTheme.typography.bodyLarge
                     )
+                }
+
+                // --- D. DESCRIPTION FIELD ---
+                FormField(label = "Description") {   //, modifier = Modifier.weight(2f)
+                    TextField(
+                        value = description,
+                        onValueChange = { if (canEdit) description = it },
+                        readOnly = !canEdit,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight(0.3f),
+                        enabled = !isSaving,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent
+                        ),
+                        placeholder = {
+                            Text(
+                                text = "Add description",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        },
+                        textStyle = MaterialTheme.typography.bodyLarge
+                    )
+                }
+
+                // --- E. EDIT HISTORY SECTION ---
+                if (entry.editCredential.isNotEmpty()) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        entry.editCredential.take(if (isSmallScreen) 1 else 3).forEach { history ->
+                            EditHistoryItem(
+                                history = history,
+                                currentUserName = currentUser.apiParamName,
+                                currentUserDisplayName = currentUser.displayName ?: ""
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -422,14 +432,14 @@ private fun EditHistoryItem(history: EditHistory, currentUserName: String, curre
             Text(
                 text = displayName,
                 color = MaterialTheme.colorScheme.error,
-                fontSize = 12.sp,
+                style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Medium
             )
         }
         Text(
             text = history.time,
             color = MaterialTheme.colorScheme.error,
-            fontSize = 12.sp
+            style = MaterialTheme.typography.labelSmall
         )
     }
 }
@@ -443,8 +453,8 @@ private fun FormField(
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             text = label,
-            fontSize = 12.sp,
-            color = MaterialTheme.colorScheme.surfaceContainerLowest
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
         )
         content()
     }

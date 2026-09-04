@@ -84,179 +84,189 @@ fun AddsettlementsScreen(
             )
         }
     ) { paddingValues ->
-        Column(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 20.dp)
         ) {
-            Spacer(modifier = Modifier.height(12.dp))
+            val screenHeight = maxHeight
+            val isSmallScreen = screenHeight < 600.dp
 
-            // --- 1. SETTLEMENT TYPE SLIDER ---
-            SettlementTypeSlider(
-                selectedType = selectedType,
-                onTypeSelected = { selectedType = it }
-            )
-
-            // --- 2. DISPLAY AREA ---
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .padding(vertical = 24.dp),
-                horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.Center
+                    .fillMaxSize()
+                    .padding(horizontal = 20.dp)
             ) {
-                Text(
-                    text = if (formula.isEmpty()) "0" else formula,
-                    fontSize = 54.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    textAlign = TextAlign.End,
-                    maxLines = 3,
-                    lineHeight = 60.sp
-                )
-                if (formula.isNotEmpty()) {
-                    Text(
-                        text = liveResult,
-                        fontSize = 32.sp,
-                        color = MaterialTheme.colorScheme.surfaceContainerLowest,
-                        textAlign = TextAlign.End
-                    )
-                }
-            }
+                Spacer(modifier = Modifier.height(if (isSmallScreen) 8.dp else 12.dp))
 
-            // --- 3. METADATA SECTION ---
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Bottom
-            ) {
-                // Person Group
+                // --- 1. SETTLEMENT TYPE SLIDER ---
+                SettlementTypeSlider(
+                    selectedType = selectedType,
+                    onTypeSelected = { selectedType = it }
+                )
+
+                // --- 2. DISPLAY AREA ---
                 Column(
-                    modifier = Modifier.clickable { isPersonDropdownExpanded = true }
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(if (isSmallScreen) 0.8f else 1f)
+                        .padding(vertical = if (isSmallScreen) 12.dp else 24.dp),
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text = "Person",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.surfaceContainerLowest
+                        text = if (formula.isEmpty()) "0" else formula,
+                        style = if (isSmallScreen) MaterialTheme.typography.displayMedium else MaterialTheme.typography.displayLarge,
+                        fontSize = if (isSmallScreen) 40.sp else 54.sp,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        textAlign = TextAlign.End,
+                        maxLines = 3,
+                        lineHeight = if (isSmallScreen) 46.sp else 60.sp
                     )
-                    Text(
-                        text = person,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                    DropdownMenu(
-                        expanded = isPersonDropdownExpanded,
-                        onDismissRequest = { isPersonDropdownExpanded = false }
-                    ) {
-                        val roommates = listOf("Arnab", "Sadman", "Sabbir").filter { it != currentUser }
-                        roommates.forEach { name ->
-                            DropdownMenuItem(
-                                text = { Text(name) },
-                                onClick = {
-                                    person = name
-                                    isPersonDropdownExpanded = false
-                                }
-                            )
-                        }
+                    if (formula.isNotEmpty()) {
+                        Text(
+                            text = liveResult,
+                            style = MaterialTheme.typography.displayMedium,
+                            fontSize = if (isSmallScreen) 24.sp else 32.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                            textAlign = TextAlign.End
+                        )
                     }
                 }
 
-                // Date Group
-                Column(
-                    modifier = Modifier.clickable {
-                        val datePickerDialog = DatePickerDialog(
-                            context,
-                            { _, year, month, day ->
-                                selectedDate = Calendar.getInstance().apply {
-                                    set(year, month, day)
-                                }
-                            },
-                            selectedDate.get(Calendar.YEAR),
-                            selectedDate.get(Calendar.MONTH),
-                            selectedDate.get(Calendar.DAY_OF_MONTH)
-                        )
-                        datePickerDialog.show()
-                    },
-                    horizontalAlignment = Alignment.End
+                // --- 3. METADATA SECTION ---
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Bottom
                 ) {
-                    Text(
-                        text = "Date",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.surfaceContainerLowest
-                    )
-                    Text(
-                        text = dateFormatter.format(selectedDate.time),
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
+                    // Person Group
+                    Column(
+                        modifier = Modifier.clickable { isPersonDropdownExpanded = true }
+                    ) {
+                        Text(
+                            text = "Person",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                        )
+                        Text(
+                            text = person,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontSize = if (isSmallScreen) 18.sp else 20.sp,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                        DropdownMenu(
+                            expanded = isPersonDropdownExpanded,
+                            onDismissRequest = { isPersonDropdownExpanded = false }
+                        ) {
+                            val roommates = listOf("Arnab", "Sadman", "Sabbir").filter { it != currentUser }
+                            roommates.forEach { name ->
+                                DropdownMenuItem(
+                                    text = { Text(name, style = MaterialTheme.typography.bodyMedium) },
+                                    onClick = {
+                                        person = name
+                                        isPersonDropdownExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    // Date Group
+                    Column(
+                        modifier = Modifier.clickable {
+                            val datePickerDialog = DatePickerDialog(
+                                context,
+                                { _, year, month, day ->
+                                    selectedDate = Calendar.getInstance().apply {
+                                        set(year, month, day)
+                                    }
+                                },
+                                selectedDate.get(Calendar.YEAR),
+                                selectedDate.get(Calendar.MONTH),
+                                selectedDate.get(Calendar.DAY_OF_MONTH)
+                            )
+                            datePickerDialog.show()
+                        },
+                        horizontalAlignment = Alignment.End
+                    ) {
+                        Text(
+                            text = "Date",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                        )
+                        Text(
+                            text = dateFormatter.format(selectedDate.time),
+                            style = MaterialTheme.typography.titleLarge,
+                            fontSize = if (isSmallScreen) 18.sp else 20.sp,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
                 }
-            }
 
-            HorizontalDivider(
-                modifier = Modifier.fillMaxWidth(),
-                thickness = 0.5.dp,
-                color = MaterialTheme.colorScheme.outline
-            )
+                HorizontalDivider(
+                    modifier = Modifier.fillMaxWidth(),
+                    thickness = 0.5.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant
+                )
 
-            Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(if (isSmallScreen) 12.dp else 24.dp))
 
-            // --- 4. CALCULATOR KEYPAD ---
-            val keys = listOf(
-                "7", "8", "9", "/",
-                "4", "5", "6", "*",
-                "1", "2", "3", "+",
-                "0", "=", "<", "-"
-            )
+                // --- 4. CALCULATOR KEYPAD ---
+                val keys = listOf(
+                    "7", "8", "9", "/",
+                    "4", "5", "6", "*",
+                    "1", "2", "3", "+",
+                    "0", "=", "<", "-"
+                )
 
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(4),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 24.dp)
-            ) {
-                items(keys) { key ->
-                    CalculatorButton(
-                        text = key,
-                        onClick = {
-                            when (key) {
-                                "<" -> if (formula.isNotEmpty()) formula = formula.dropLast(1)
-                                "=" -> {
-                                    val result = evaluateFormula(formula)
-                                    if (result.isNotEmpty()) formula = result
-                                }
-                                "/", "*", "+", "-" -> {
-                                    if (formula.isNotEmpty()) {
-                                        val lastChar = formula.last()
-                                        if (lastChar in "+-*/") {
-                                            formula = formula.dropLast(1) + key
-                                        } else if (formula.any { it in "+-*/" }) {
-                                            val result = evaluateFormula(formula)
-                                            if (result.isNotEmpty()) {
-                                                formula = result + key
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(4),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(if (isSmallScreen) 2.5f else 2f)
+                        .padding(bottom = if (isSmallScreen) 8.dp else 24.dp)
+                ) {
+                    items(keys) { key ->
+                        CalculatorButton(
+                            text = key,
+                            onClick = {
+                                when (key) {
+                                    "<" -> if (formula.isNotEmpty()) formula = formula.dropLast(1)
+                                    "=" -> {
+                                        val result = evaluateFormula(formula)
+                                        if (result.isNotEmpty()) formula = result
+                                    }
+                                    "/", "*", "+", "-" -> {
+                                        if (formula.isNotEmpty()) {
+                                            val lastChar = formula.last()
+                                            if (lastChar in "+-*/") {
+                                                formula = formula.dropLast(1) + key
+                                            } else if (formula.any { it in "+-*/" }) {
+                                                val result = evaluateFormula(formula)
+                                                if (result.isNotEmpty()) {
+                                                    formula = result + key
+                                                }
+                                            } else {
+                                                formula += key
                                             }
-                                        } else {
-                                            formula += key
                                         }
                                     }
+                                    else -> formula += key
                                 }
-                                else -> formula += key
-                            }
-                        },
-                        onLongClick = {
-                            if (key == "<") {
-                                formula = ""
-                            }
-                        },
-                        isOperator = key in listOf("/", "*", "+", "-", "=", "<")
-                    )
+                            },
+                            onLongClick = {
+                                if (key == "<") {
+                                    formula = ""
+                                }
+                            },
+                            isOperator = key in listOf("/", "*", "+", "-", "=", "<")
+                        )
+                    }
                 }
             }
         }
@@ -304,8 +314,8 @@ fun SettlementTypeSlider(
             ) {
                 Text(
                     text = "Sent",
-                    fontWeight = FontWeight.Medium,
-                    color = if (selectedType == "Sent") MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.surfaceDim
+                    style = MaterialTheme.typography.labelLarge,
+                    color = if (selectedType == "Sent") MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                 )
             }
             Box(
@@ -317,8 +327,8 @@ fun SettlementTypeSlider(
             ) {
                 Text(
                     text = "Received",
-                    fontWeight = FontWeight.Medium,
-                    color = if (selectedType == "Received") MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.surfaceDim
+                    style = MaterialTheme.typography.labelLarge,
+                    color = if (selectedType == "Received") MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                 )
             }
         }
@@ -352,8 +362,7 @@ private fun CalculatorButton(
     ) {
         Text(
             text = text,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Medium,
+            style = MaterialTheme.typography.headlineLarge,
             color = MaterialTheme.colorScheme.onBackground
         )
     }

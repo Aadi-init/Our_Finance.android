@@ -73,121 +73,130 @@ fun LoginContent(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    Column(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .background(MaterialTheme.colorScheme.background)
     ) {
-        // --- Redesigned Top Portion ---
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(bottomStart = 35.dp, bottomEnd = 35.dp))
-                .background(MaterialTheme.colorScheme.surfaceContainerLow)
-                .padding(top = 80.dp, bottom = 60.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_logo_foreground),
-                    contentDescription = null,
-                    modifier = Modifier.size(160.dp),
-                    tint = MaterialTheme.colorScheme.onBackground
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = buildAnnotatedString {
-                        withStyle(style = SpanStyle(fontSize = 20.sp, fontWeight = FontWeight.Normal, color = MaterialTheme.colorScheme.surfaceContainerLowest)) {
-                            append("Hey there!\n")
-                        }
-                        withStyle(style = SpanStyle(fontSize = 20.sp, fontWeight = FontWeight.Normal, color = MaterialTheme.colorScheme.surfaceContainerLowest)) {
-                            append("Lets get  ")
-                        }
-                        withStyle(style = SpanStyle(fontSize = 20.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)) {
-                            append("Our Finance")
-                        }
-                        withStyle(style = SpanStyle(fontSize = 20.sp, fontWeight = FontWeight.Normal, color = MaterialTheme.colorScheme.surfaceContainerLowest)) {
-                            append("  sorted.")
-                        }
-                    },
-                    textAlign = TextAlign.Center,
-                    lineHeight = 26.sp,
-                    //color = MaterialTheme.colorScheme.onBackground
-                )
-            }
-        }
+        val screenHeight = maxHeight
+        val isSmallScreen = screenHeight < 700.dp
 
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // Lower portion continues with consistent padding
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp),
+            modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            CustomInputField(
-                value = email,
-                onValueChange = { email = it },
-                label = "Email Id",
-                leadingIcon = Icons.Default.Email
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-
-            CustomInputField(
-                value = password,
-                onValueChange = { password = it },
-                label = "Password",
-                leadingIcon = Icons.Default.Lock,
-                isPassword = true,
-                passwordVisible = passwordVisible,
-                onVisibilityToggle = { passwordVisible = !passwordVisible }
-            )
-            Spacer(modifier = Modifier.height(10.dp))
-
+            // --- Redesigned Top Portion ---
             Box(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(if (isSmallScreen) 1.2f else 1f)
+                    .clip(RoundedCornerShape(bottomStart = 35.dp, bottomEnd = 35.dp))
+                    .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                    .padding(top = if (isSmallScreen) 40.dp else 80.dp, bottom = if (isSmallScreen) 30.dp else 60.dp),
                 contentAlignment = Alignment.Center
             ) {
-                TextButton(onClick = onForgotPasswordClick) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_logo_foreground),
+                        contentDescription = null,
+                        modifier = Modifier.size(if (isSmallScreen) 100.dp else 140.dp),
+                        tint = MaterialTheme.colorScheme.onBackground
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Forgot Password?",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 12.sp
+                        text = buildAnnotatedString {
+                            withStyle(style = SpanStyle(fontSize = if (isSmallScreen) 14.sp else 16.sp, fontWeight = FontWeight.Normal, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f))) {
+                                append("Hey there!\n")
+                            }
+                            withStyle(style = SpanStyle(fontSize = if (isSmallScreen) 14.sp else 16.sp, fontWeight = FontWeight.Normal, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f))) {
+                                append("Lets get  ")
+                            }
+                            withStyle(style = SpanStyle(fontSize = if (isSmallScreen) 14.sp else 16.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)) {
+                                append("Our Finance")
+                            }
+                            withStyle(style = SpanStyle(fontSize = if (isSmallScreen) 14.sp else 16.sp, fontWeight = FontWeight.Normal, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f))) {
+                                append("  sorted.")
+                            }
+                        },
+                        textAlign = TextAlign.Center,
+                        lineHeight = if (isSmallScreen) 18.sp else 22.sp,
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(if (isSmallScreen) 16.dp else 32.dp))
 
-            if (isLoggingIn) {
-                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-            } else {
-                SubmitButton("Login", onClick = {
-                    if (email.isEmpty() || password.isEmpty()) {
-                        Toast.makeText(context, "Please enter your email and password.", Toast.LENGTH_SHORT).show()
-                    } else if (!allowedEmails.contains(email.trim().lowercase())) {
-                        Toast.makeText(context, "Access Denied: Email not whitelisted.", Toast.LENGTH_LONG).show()
-                    } else {
-                        isLoggingIn = true
-                        coroutineScope.launch {
-                            onLoginClick(email, password)
-                            isLoggingIn = false
-                        }
+            // Lower portion continues with consistent padding
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(if (isSmallScreen) 2f else 1.5f)
+                    .padding(horizontal = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                CustomInputField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = "Email Id",
+                    leadingIcon = Icons.Default.Email
+                )
+                Spacer(modifier = Modifier.height(if (isSmallScreen) 8.dp else 12.dp))
+
+                CustomInputField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = "Password",
+                    leadingIcon = Icons.Default.Lock,
+                    isPassword = true,
+                    passwordVisible = passwordVisible,
+                    onVisibilityToggle = { passwordVisible = !passwordVisible }
+                )
+                Spacer(modifier = Modifier.height(if (isSmallScreen) 4.dp else 10.dp))
+
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    TextButton(onClick = onForgotPasswordClick) {
+                        Text(
+                            text = "Forgot Password?",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.labelMedium
+                        )
                     }
-                })
+                }
+
+                Spacer(modifier = Modifier.height(if (isSmallScreen) 4.dp else 10.dp))
+
+                if (isLoggingIn) {
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                } else {
+                    SubmitButton("Login", onClick = {
+                        if (email.isEmpty() || password.isEmpty()) {
+                            Toast.makeText(context, "Please enter your email and password.", Toast.LENGTH_SHORT).show()
+                        } else if (!allowedEmails.contains(email.trim().lowercase())) {
+                            Toast.makeText(context, "Access Denied: Email not whitelisted.", Toast.LENGTH_LONG).show()
+                        } else {
+                            isLoggingIn = true
+                            coroutineScope.launch {
+                                onLoginClick(email, password)
+                                isLoggingIn = false
+                            }
+                        }
+                    })
+                }
+
+                Spacer(modifier = Modifier.height(if (isSmallScreen) 10.dp else 20.dp))
+
+                OrSeparator()
+
+                Spacer(modifier = Modifier.height(if (isSmallScreen) 10.dp else 20.dp))
+
+                GoogleButton(onClick = onGoogleSignInClick)
+
+                Spacer(modifier = Modifier.height(if (isSmallScreen) 8.dp else 16.dp))
             }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            OrSeparator()
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            GoogleButton(onClick = onGoogleSignInClick)
-
-            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }

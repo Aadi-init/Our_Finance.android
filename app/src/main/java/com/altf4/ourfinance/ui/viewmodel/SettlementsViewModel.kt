@@ -13,7 +13,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
-
+import com.altf4.ourfinance.data.model.SettlementsResponse
+import com.altf4.ourfinance.utils.CacheManager
 class SettlementsViewModel : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettlementsUiState())
@@ -33,28 +34,65 @@ class SettlementsViewModel : ViewModel() {
     private val _filterType = MutableStateFlow("All")
     val filterType: StateFlow<String> = _filterType.asStateFlow()
 
+//    fun fetchSettlements(currentUser: String, forceRefresh: Boolean = false) {
+//        viewModelScope.launch {
+//            _uiState.value = _uiState.value.copy(isLoading = true)
+//
+//            try {
+//                val response = RetrofitClient.apiService.getSettlements(username = currentUser)
+//
+//                // Sync roommate profiles to UserManager
+//                UserManager.syncUserProfiles(response.userProfiles)
+//
+//                allRawEntries = response.entries
+//                updateFilteredState(currentUser, response)
+//            } catch (e: Exception) {
+//                Log.e("PerformanceAudit", "Fetch Settlements Error", e)
+//                _uiState.value = _uiState.value.copy(
+//                    isLoading = false,
+//                    isInitialized = true,
+//                    error = e.localizedMessage ?: "Failed to fetch settlement data"
+//                )
+//            }
+//        }
+//    }
+
     fun fetchSettlements(currentUser: String, forceRefresh: Boolean = false) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
+            // 1. INSTANT CACHE LOAD
+            val cachedResponse = CacheManager.getCachedData<SettlementsResponse>("settlements_$currentUser")
+            if (cachedResponse != null) {
+                allRawEntries = cachedResponse.entries
+                updateFilteredState(currentUser, isLoading = true)
+            } else {
+                _uiState.value = _uiState.value.copy(isLoading = true)
+            }
 
+            // 2. BACKGROUND NETWORK FETCH
             try {
                 val response = RetrofitClient.apiService.getSettlements(username = currentUser)
 
-                // Sync roommate profiles to UserManager
+                CacheManager.saveCacheData("settlements_$currentUser", response)
                 UserManager.syncUserProfiles(response.userProfiles)
 
                 allRawEntries = response.entries
-                updateFilteredState(currentUser, response)
+                updateFilteredState(currentUser, isLoading = false)
             } catch (e: Exception) {
                 Log.e("PerformanceAudit", "Fetch Settlements Error", e)
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    isInitialized = true,
-                    error = e.localizedMessage ?: "Failed to fetch settlement data"
-                )
+                if (allRawEntries.isEmpty()) {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        isInitialized = true,
+                        error = e.localizedMessage ?: "Failed to fetch settlement data"
+                    )
+                } else {
+                    _uiState.value = _uiState.value.copy(isLoading = false)
+                }
             }
         }
     }
+
+
 
     fun setDateFilter(month: Int, year: Int, currentUser: String) {
         _selectedMonth.value = month
@@ -72,7 +110,7 @@ class SettlementsViewModel : ViewModel() {
         updateFilteredState(currentUser)
     }
 
-    private fun updateFilteredState(currentUser: String, response: com.altf4.ourfinance.data.model.SettlementsResponse? = null) {
+    private fun updateFilteredState(currentUser: String, response: com.altf4.ourfinance.data.model.SettlementsResponse? = null, isLoading: Boolean = false) {
         val filteredByDate = allRawEntries.filter { entry ->
             val entryDate = parseTimestamp(entry.timestamp)
             val cal = Calendar.getInstance().apply { time = entryDate }
@@ -106,7 +144,7 @@ class SettlementsViewModel : ViewModel() {
         }
 
         _uiState.value = _uiState.value.copy(
-            isLoading = false,
+            isLoading = isLoading,
             isInitialized = true,
             totalSent = totalSent,
             totalReceived = totalReceived,

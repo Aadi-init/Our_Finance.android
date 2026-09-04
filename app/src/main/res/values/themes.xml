@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.OurFinance" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.OurFinance" parent="android:Theme.Material.NoActionBar" />
+
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#121212</item>
+
+        <item name="windowSplashScreenAnimatedIcon">@android:color/transparent</item>
+
+        <item name="postSplashScreenTheme">@style/Theme.OurFinance</item>
+    </style>
+
 </resources>

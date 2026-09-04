@@ -32,6 +32,7 @@ import com.altf4.ourfinance.ui.viewmodel.SettlementsViewModel
 import com.altf4.ourfinance.ui.viewmodel.ThemeViewModel
 import com.altf4.ourfinance.ui.screens.AccessibilityScreen
 import com.altf4.ourfinance.ui.screens.AboutScreen
+import com.altf4.ourfinance.ui.screens.SplashScreen
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import android.widget.Toast
@@ -57,6 +58,10 @@ fun AppNavGraph(
 ) {
     val authenticatedUser by authViewModel.authenticatedUser.collectAsState()
 
+    // Wire up live synchronization channels for the custom splash indicator
+    val initProgress by dashboardViewModel.initProgress.collectAsState()
+    val isSyncComplete by dashboardViewModel.isSyncComplete.collectAsState()
+
     // Centralized navigation logic: handles navigation AFTER a successful sign-in
     LaunchedEffect(authenticatedUser) {
         if (authenticatedUser != null) {
@@ -74,9 +79,40 @@ fun AppNavGraph(
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Login.route,
+        startDestination = Screen.Splash.route,
         modifier = modifier
     ) {
+        // --- ANIMATED SPLASH SCREEN OVERLAY ---
+        composable(Screen.Splash.route) {
+            // Trigger background pre-fetch sequences immediately when layout targets screen space
+            LaunchedEffect(authenticatedUser) {
+                val user = authenticatedUser
+                if (user != null) {
+                    // Authenticated session found -> Warm up and load live metrics before landing on dashboard
+                    dashboardViewModel.performAppWarmUpInitialization(
+                        username = user.apiParamName,
+                        expensesViewModel = expensesViewModel,
+                        settlementsViewModel = settlementsViewModel
+                    )
+                } else {
+                    // No session context cached -> Run a fast fake fill sequence to let the user log in
+                    dashboardViewModel.performAppWarmUpInitialization("Guest", expensesViewModel, settlementsViewModel)
+                }
+            }
+
+            SplashScreen(
+                initializationProgress = initProgress,
+                isInitialized = isSyncComplete,
+                onAnimationComplete = {
+                    navController.navigate(
+                        if (authenticatedUser != null) Screen.Dashboard.route else Screen.Login.route
+                    ) {
+                        popUpTo(Screen.Splash.route) { inclusive = true } // Wipe Splash completely out of backstack
+                    }
+                }
+            )
+        }
+
         // --- LOGIN SCREEN ---
         composable(Screen.Login.route) {
             val context = LocalContext.current
@@ -129,12 +165,23 @@ fun AppNavGraph(
         }
 
         // --- EXPENSES SCREEN ---
-        composable(Screen.Expenses.route) {
+        composable(
+            route = Screen.Expenses.routeWithArgs,
+            arguments = listOf(
+                navArgument("highlightId") { 
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            val highlightId = backStackEntry.arguments?.getString("highlightId")
             authenticatedUser?.let { user ->
                 ExpensesScreen(
                     viewModel = expensesViewModel,
                     currentUser = user,
                     navController = navController,
+                    highlightId = highlightId,
                     onAddExpenseClick = {
                         navController.navigate(Screen.AddExpense.route)
                     },
@@ -146,12 +193,23 @@ fun AppNavGraph(
         }
 
         // --- SETTLEMENTS SCREEN ---
-        composable(Screen.Settlements.route) {
+        composable(
+            route = Screen.Settlements.routeWithArgs,
+            arguments = listOf(
+                navArgument("highlightId") { 
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            val highlightId = backStackEntry.arguments?.getString("highlightId")
             authenticatedUser?.let { user ->
                 SettlementsScreen(
                     viewModel = settlementsViewModel,
                     currentUser = user,
                     navController = navController,
+                    highlightId = highlightId,
                     onAddSettlementClick = {
                         navController.navigate(Screen.AddSettlement.route)
                     },

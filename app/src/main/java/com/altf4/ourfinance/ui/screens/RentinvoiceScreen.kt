@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -69,216 +68,223 @@ fun RentinvoiceScreen(
     val monthYearFormat = SimpleDateFormat("MMMM yyyy", Locale.US)
     val currentMonthYear = monthYearFormat.format(calendar.time).uppercase(Locale.US)
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .navigationBarsPadding()
-    ) {
-        // --- 1. REUSABLE TOP TITLE BAR ---
-        CustomTopBar(
-            title = "Rent Invoice",
-            navigationIcon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_back),
-                    contentDescription = "Go Back",
-                    tint = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier
-                        .size(24.dp)
-                        .clickable { onBackClick() }
-                )
-            }
-        )
-
-        // --- 2. HEAVY WEIGHT TOP LOGIC (CENTERED CIRCLE) ---
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-                modifier = Modifier
-                    .requiredSize(160.dp)
-                    .border(
-                        width = 3.dp,
-                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                        shape = CircleShape
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            CustomTopBar(
+                title = "Rent Invoice",
+                navigationIcon = {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_back),
+                        contentDescription = "Go Back",
+                        tint = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier
+                            .size(24.dp)
+                            .clickable { onBackClick() }
                     )
-            ) {
-                Text(
-                    text = "Due in",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = "$daysLeft",
-                    fontSize = 60.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    style = LocalTextStyle.current.copy(
-                        platformStyle = PlatformTextStyle(includeFontPadding = false)
-                    )
-                )
-                Text(
-                    text = "Days",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+                }
+            )
         }
-
-        // --- 3. BOTTOM CARDS & BUTTON CONTAINER ---
-        Column(
+    ) { paddingValues ->
+        BoxWithConstraints(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 15.dp, vertical = 24.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .fillMaxSize()
+                .padding(paddingValues)
         ) {
-            // --- TOTAL RENT CARD ---
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(10.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            val screenHeight = maxHeight
+            val isSmallScreen = screenHeight < 600.dp
+
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Row(
+                // --- 2. HEAVY WEIGHT TOP LOGIC (CENTERED CIRCLE) ---
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .weight(if (isSmallScreen) 1f else 1.2f),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = currentMonthYear,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                    Text(
-                        text = data.totalRent.toTkFormat(),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                }
-            }
-
-            // --- INVOICE BREAKDOWN CARD ---
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(10.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        text = "Description",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    // Dashed Line Divider
-                    val outlineColor = MaterialTheme.colorScheme.outline
-                    Canvas(
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .height(1.dp)
+                            .requiredSize(if (isSmallScreen) 120.dp else 160.dp)
+                            .border(
+                                width = 3.dp,
+                                color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                shape = CircleShape
+                            )
                     ) {
-                        val yCenter = size.height / 2
-                        drawLine(
-                            color = outlineColor,
-                            start = Offset(0f, yCenter),
-                            end = Offset(size.width, yCenter),
-                            strokeWidth = 1.dp.toPx(),
-                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(15f, 20f), 0f)
+                        Text(
+                            text = "Due in",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "$daysLeft",
+                            style = (if (isSmallScreen) MaterialTheme.typography.displayLarge else MaterialTheme.typography.displayLarge.copy(fontSize = 48.sp)).copy(
+                                platformStyle = PlatformTextStyle(includeFontPadding = false)
+                            ),
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                        Text(
+                            text = "Days",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-
-                    Spacer(modifier = Modifier.height(5.dp))
-
-                    val breakdown = data.invoiceBreakdown
-
-                    BreakdownRow(title = "Rental Bill", amount = breakdown.rent)
-                    BreakdownRow(title = "Electricity Bill", amount = breakdown.electricity)
-                    BreakdownRow(title = "Internet Bill", amount = breakdown.internet)
-                    BreakdownRow(title = "Water Filter Bill", amount = breakdown.waterFilter)
-                    BreakdownRow(title = "Househelp Bill", amount = breakdown.househelp)
-                    BreakdownRow(title = "Other Bills", amount = breakdown.others)
-
-                    BreakdownRow(
-                        title = "Adjustments",
-                        amount = breakdown.adjustments,
-                        isAdjustment = true
-                    )
                 }
-            }
 
-            Spacer(modifier = Modifier.height(0.dp))
-
-            // --- SMART DOWNLOAD BUTTON ---
-            Button(
-                onClick = {
-                    onDownloadClick()
-
-                    if (data.rentStatus.equals("Outdated", ignoreCase = true)) {
-                        Toast.makeText(context, "Rent has not been updated yet. Download Invoice later.", Toast.LENGTH_LONG).show()
-                    } else {
-                        if (!isDownloading) {
-                            isDownloading = true
-                            coroutineScope.launch {
-                                try {
-                                    val apiUser = when {
-                                        data.fullName.contains("Arnab", ignoreCase = true) -> "Arnab"
-                                        data.fullName.contains("Sadman", ignoreCase = true) -> "Sadman"
-                                        else -> "Sabbir"
-                                    }
-
-                                    val response = RetrofitClient.apiService.downloadInvoice(username = apiUser)
-
-                                    if (response.pdfBase64 != null && response.fileName != null) {
-                                        savePdfToDownloads(context, response.pdfBase64, response.fileName)
-                                    } else {
-                                        Toast.makeText(context, "Failed to fetch invoice. Please try again.", Toast.LENGTH_SHORT).show()
-                                    }
-                                } catch (e: Exception) {
-                                    Toast.makeText(context, "Network Error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
-                                } finally {
-                                    isDownloading = false
-                                }
-                            }
+                // --- 3. BOTTOM CARDS & BUTTON CONTAINER ---
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(if (isSmallScreen) 2f else 1.8f)
+                        .padding(horizontal = 15.dp, vertical = if (isSmallScreen) 8.dp else 24.dp),
+                    verticalArrangement = Arrangement.spacedBy(if (isSmallScreen) 8.dp else 16.dp)
+                ) {
+                    // --- TOTAL RENT CARD ---
+                    Card(
+                        modifier = Modifier.fillMaxWidth().weight(0.7f),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = currentMonthYear,
+                                style = MaterialTheme.typography.titleMedium,
+                                //fontSize = if (isSmallScreen) 16.sp else 22.sp,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                            Text(
+                                text = data.totalRent.toTkFormat(),
+                                style = MaterialTheme.typography.titleMedium,
+                                //fontSize = if (isSmallScreen) 16.sp else 22.sp,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
                         }
                     }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.onBackground,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                ),
-                shape = RoundedCornerShape(50)
-            ) {
-                if (isDownloading) {
-                    CircularProgressIndicator(
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(24.dp),
-                        strokeWidth = 2.dp
-                    )
-                } else {
-                    Text(
-                        text = "Download",
-                        fontSize = 19.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+
+                    // --- INVOICE BREAKDOWN CARD ---
+                    Card(
+                        modifier = Modifier.fillMaxWidth().weight(if (isSmallScreen) 3f else 4f),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    ) {
+                        Column(
+                            modifier = Modifier.fillMaxSize().padding(16.dp),
+                            verticalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            Text(
+                                text = "Description",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+
+                            // Dashed Line Divider
+                            val outlineColor = MaterialTheme.colorScheme.outline
+                            Canvas(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(1.dp)
+                            ) {
+                                val yCenter = size.height / 2
+                                drawLine(
+                                    color = outlineColor,
+                                    start = Offset(0f, yCenter),
+                                    end = Offset(size.width, yCenter),
+                                    strokeWidth = 1.dp.toPx(),
+                                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(15f, 20f), 0f)
+                                )
+                            }
+
+                            val breakdown = data.invoiceBreakdown
+
+                            BreakdownRow(title = "Rental Bill", amount = breakdown.rent, isSmall = isSmallScreen)
+                            BreakdownRow(title = "Electricity Bill", amount = breakdown.electricity, isSmall = isSmallScreen)
+                            BreakdownRow(title = "Internet Bill", amount = breakdown.internet, isSmall = isSmallScreen)
+                            BreakdownRow(title = "Water Filter Bill", amount = breakdown.waterFilter, isSmall = isSmallScreen)
+                            BreakdownRow(title = "Househelp Bill", amount = breakdown.househelp, isSmall = isSmallScreen)
+                            BreakdownRow(title = "Other Bills", amount = breakdown.others, isSmall = isSmallScreen)
+
+                            BreakdownRow(
+                                title = "Adjustments",
+                                amount = breakdown.adjustments,
+                                isAdjustment = true,
+                                isSmall = isSmallScreen
+                            )
+                        }
+                    }
+
+                    // --- SMART DOWNLOAD BUTTON ---
+                    Button(
+                        onClick = {
+                            onDownloadClick()
+
+                            if (data.rentStatus.equals("Outdated", ignoreCase = true)) {
+                                Toast.makeText(context, "Rent has not been updated yet. Download Invoice later.", Toast.LENGTH_LONG).show()
+                            } else {
+                                if (!isDownloading) {
+                                    isDownloading = true
+                                    coroutineScope.launch {
+                                        try {
+                                            val apiUser = when {
+                                                data.fullName.contains("Arnab", ignoreCase = true) -> "Arnab"
+                                                data.fullName.contains("Sadman", ignoreCase = true) -> "Sadman"
+                                                else -> "Sabbir"
+                                            }
+
+                                            val response = RetrofitClient.apiService.downloadInvoice(username = apiUser)
+
+                                            if (response.pdfBase64 != null && response.fileName != null) {
+                                                savePdfToDownloads(context, response.pdfBase64, response.fileName)
+                                            } else {
+                                                Toast.makeText(context, "Failed to fetch invoice. Please try again.", Toast.LENGTH_SHORT).show()
+                                            }
+                                        } catch (e: Exception) {
+                                            Toast.makeText(context, "Network Error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                                        } finally {
+                                            isDownloading = false
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(0.8f)
+                            .height(48.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.onBackground,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ),
+                        shape = RoundedCornerShape(50)
+                    ) {
+                        if (isDownloading) {
+                            CircularProgressIndicator(
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text(
+                                text = "Download",
+                                style = MaterialTheme.typography.titleMedium,
+                                //fontSize = if (isSmallScreen) 16.sp else 19.sp,
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -289,7 +295,8 @@ fun RentinvoiceScreen(
 private fun BreakdownRow(
     title: String,
     amount: Double,
-    isAdjustment: Boolean = false
+    isAdjustment: Boolean = false,
+    isSmall: Boolean = false
 ) {
     val contentColor = if (isAdjustment) {
         if (amount < 0) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.error
@@ -301,19 +308,20 @@ private fun BreakdownRow(
 
     Row(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = title,
-            fontSize = 14.sp,
+            style = MaterialTheme.typography.bodyMedium,
+            fontSize = if (isSmall) 12.sp else 14.sp,
             color = titleColor
         )
         Text(
             text = amount.toTkFormat(),
-            fontSize = 14.sp,
+            style = MaterialTheme.typography.bodyMedium,
+            fontSize = if (isSmall) 12.sp else 14.sp,
             fontWeight = FontWeight.Bold,
             color = contentColor
         )

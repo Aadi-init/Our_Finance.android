@@ -112,195 +112,203 @@ fun AddexpensesformScreen(
             )
         }
     ) { paddingValues ->
-        Column(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // --- A. DATE PICKER FIELD ---
-            FormField(label = "Date") {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .clickable(enabled = !isSaving) {
-                            DatePickerDialog(
-                                context,
-                                { _, year, month, day ->
-                                    selectedDate = Calendar.getInstance().apply {
-                                        set(year, month, day)
-                                    }
-                                },
-                                selectedDate.get(Calendar.YEAR),
-                                selectedDate.get(Calendar.MONTH),
-                                selectedDate.get(Calendar.DAY_OF_MONTH)
-                            ).show()
-                        }
-                        .padding(horizontal = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = dateFormatter.format(selectedDate.time),
-                        color = MaterialTheme.colorScheme.onBackground,
-                        fontSize = 16.sp
-                    )
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_calendar),
-                        contentDescription = "Select Date",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-            }
+            val screenHeight = maxHeight
+            val isSmallScreen = screenHeight < 600.dp
 
-            // --- B. TWO-COLUMN ROW: CATEGORY & PERSON ---
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 12.dp, vertical = if (isSmallScreen) 10.dp else 20.dp),
+                verticalArrangement = Arrangement.spacedBy(if (isSmallScreen) 8.dp else 12.dp)
             ) {
-                // Category Dropdown
-                FormField(label = "Category", modifier = Modifier.weight(1f)) {
-                    Box {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(56.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(MaterialTheme.colorScheme.surfaceVariant)
-                                .clickable(enabled = !isSaving) { isCategoryDropdownExpanded = true }
-                                .padding(horizontal = 16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = category,
-                                color = MaterialTheme.colorScheme.onBackground,
-                                fontSize = 16.sp
-                            )
-                            Icon(
-                                imageVector = Icons.Default.ArrowDropDown,
-                                contentDescription = "Dropdown",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        DropdownMenu(
-                            expanded = isCategoryDropdownExpanded,
-                            onDismissRequest = { isCategoryDropdownExpanded = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("Groceries") },
-                                onClick = {
-                                    category = "Groceries"
-                                    isCategoryDropdownExpanded = false
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Miscellaneous") },
-                                onClick = {
-                                    category = "Miscellaneous"
-                                    isCategoryDropdownExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
-
-                // Person Field (Read-only)
-                FormField(label = "Person", modifier = Modifier.weight(1f)) {
+                // --- A. DATE PICKER FIELD ---
+                FormField(label = "Date") { //, modifier = Modifier.weight(1f)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(56.dp)
+                            .fillMaxHeight(0.08f)
                             .clip(RoundedCornerShape(10.dp))
                             .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .clickable(enabled = !isSaving) {
+                                DatePickerDialog(
+                                    context,
+                                    { _, year, month, day ->
+                                        selectedDate = Calendar.getInstance().apply {
+                                            set(year, month, day)
+                                        }
+                                    },
+                                    selectedDate.get(Calendar.YEAR),
+                                    selectedDate.get(Calendar.MONTH),
+                                    selectedDate.get(Calendar.DAY_OF_MONTH)
+                                ).show()
+                            }
                             .padding(horizontal = 16.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Image(
-                            painter = rememberAsyncImagePainter(
-                                model = currentUser.profilePictureUrl ?: "https://ui-avatars.com/api/?name=${currentUser.apiParamName}&background=22C55E&color=fff"
-                            ),
-                            contentDescription = "User Avatar",
-                            modifier = Modifier
-                                .size(24.dp)
-                                .clip(CircleShape),
-                            contentScale = ContentScale.Crop
-                        )
                         Text(
-                            text = "You",
+                            text = dateFormatter.format(selectedDate.time),
                             color = MaterialTheme.colorScheme.onBackground,
-                            fontSize = 16.sp
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_calendar),
+                            contentDescription = "Select Date",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                 }
-            }
 
-            // --- C. AMOUNT FIELD ---
-            FormField(label = "Amount") {
-                TextField(
-                    value = amount,
-                    onValueChange = {
-                        handleAmountChange(it)
-                        amountError = false
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = !isSaving,
-                    isError = amountError,
-                    shape = RoundedCornerShape(10.dp),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        focusedTextColor = MaterialTheme.colorScheme.onBackground,
-                        unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
-                    ),
-                    prefix = {
-                        Text(
-                            text = "Tk. ",
-                            color = MaterialTheme.colorScheme.onBackground,
-                            fontSize = 16.sp
-                        )
-                    },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    textStyle = LocalTextStyle.current.copy(fontSize = 16.sp)
-                )
-            }
+                // --- B. TWO-COLUMN ROW: CATEGORY & PERSON ---
+                Row(
+                    modifier = Modifier.fillMaxWidth(),    //.weight(0.8f),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // Category Dropdown
+                    FormField(label = "Category", modifier = Modifier.weight(1f)) {
+                        Box {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .fillMaxHeight(0.09f)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                                    .clickable(enabled = !isSaving) { isCategoryDropdownExpanded = true }
+                                    .padding(horizontal = 16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = category,
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                                Icon(
+                                    imageVector = Icons.Default.ArrowDropDown,
+                                    contentDescription = "Dropdown",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = isCategoryDropdownExpanded,
+                                onDismissRequest = { isCategoryDropdownExpanded = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Groceries") },
+                                    onClick = {
+                                        category = "Groceries"
+                                        isCategoryDropdownExpanded = false
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Miscellaneous") },
+                                    onClick = {
+                                        category = "Miscellaneous"
+                                        isCategoryDropdownExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
 
-            // --- D. DESCRIPTION FIELD ---
-            FormField(label = "Description") {
-                TextField(
-                    value = description,
-                    onValueChange = { description = it },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(140.dp),
-                    enabled = !isSaving,
-                    shape = RoundedCornerShape(10.dp),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        focusedTextColor = MaterialTheme.colorScheme.onBackground,
-                        unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
-                    ),
-                    placeholder = {
-                        Text(
-                            text = "Add description",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                            fontSize = 14.sp
-                        )
-                    },
-                    textStyle = LocalTextStyle.current.copy(fontSize = 16.sp)
-                )
+                    // Person Field (Read-only)
+                    FormField(label = "Person", modifier = Modifier.weight(1f)) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .fillMaxHeight(0.09f)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                .padding(horizontal = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Image(
+                                painter = rememberAsyncImagePainter(
+                                    model = currentUser.profilePictureUrl ?: "https://ui-avatars.com/api/?name=${currentUser.apiParamName}&background=22C55E&color=fff"
+                                ),
+                                contentDescription = "User Avatar",
+                                modifier = Modifier
+                                    .size(if (isSmallScreen) 20.dp else 24.dp)
+                                    .clip(CircleShape),
+                                contentScale = ContentScale.Crop
+                            )
+                            Text(
+                                text = "You",
+                                color = MaterialTheme.colorScheme.onBackground,
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
+                    }
+                }
+
+                // --- C. AMOUNT FIELD ---
+                FormField(label = "Amount") { //, modifier = Modifier.weight(0.4f)
+                    TextField(
+                        value = amount,
+                        onValueChange = {
+                            handleAmountChange(it)
+                            amountError = false
+                        },
+                        modifier = Modifier.fillMaxWidth().fillMaxHeight(0.115f),
+                        enabled = !isSaving,
+                        isError = amountError,
+                        shape = RoundedCornerShape(10.dp),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent
+                        ),
+                        prefix = {
+                            Text(
+                                text = "Tk. ",
+                                color = MaterialTheme.colorScheme.onBackground,
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        textStyle = MaterialTheme.typography.bodyLarge
+                    )
+                }
+
+                // --- D. DESCRIPTION FIELD ---
+                FormField(label = "Description") { //, modifier = Modifier.weight(1f)
+                    TextField(
+                        value = description,
+                        onValueChange = { description = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight(0.3f),
+                        enabled = !isSaving,
+                        shape = RoundedCornerShape(10.dp),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent
+                        ),
+                        placeholder = {
+                            Text(
+                                text = "Add description",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        },
+                        textStyle = MaterialTheme.typography.bodyLarge
+                    )
+                }
             }
         }
     }
@@ -312,11 +320,11 @@ private fun FormField(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.Start) {
         Text(
             text = label,
-            fontSize = 12.sp,
-            color = MaterialTheme.colorScheme.surfaceContainerLowest
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
         )
         content()
     }

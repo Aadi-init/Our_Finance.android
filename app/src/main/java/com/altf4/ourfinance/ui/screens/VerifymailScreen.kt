@@ -34,21 +34,20 @@ fun VerifymailScreen() {
     ) {
         // 1. Greeting
         // Top spacing
-        Spacer(modifier = Modifier.height(112.dp))
+        Spacer(modifier = Modifier.weight(1f))
         DisplayText("Verify\nYour Email")
         // Bottom spacing
-        Spacer(modifier = Modifier.height(112.dp))
+        Spacer(modifier = Modifier.weight(1f))
 
         //2. Text Info.
         Text(
             text = "Enter the 4 digit code sent to your mail",
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontSize = 12.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+            style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 4.dp)
-                .align(Alignment.Start)
         )
 
         Spacer(modifier = Modifier.height(5.dp))
@@ -75,7 +74,7 @@ fun VerifymailScreen() {
                     text = "Resend Code",
                     textDecoration = TextDecoration.Underline,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 12.sp
+                    style = MaterialTheme.typography.labelMedium
                 )
             }
         }
@@ -84,8 +83,8 @@ fun VerifymailScreen() {
 
         //5. Verify Button
         SubmitButton("Verify", onClick = { })
-
-
+        
+        Spacer(modifier = Modifier.weight(0.5f))
     }
 }
 

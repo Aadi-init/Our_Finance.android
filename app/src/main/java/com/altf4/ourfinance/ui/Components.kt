@@ -21,8 +21,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import com.altf4.ourfinance.R
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -30,7 +29,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.draw.clip
-import androidx.compose.animation.core.spring
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.tooling.preview.Preview
 import android.content.res.Configuration
 import com.altf4.ourfinance.ui.theme.OurFinanceTheme
@@ -367,21 +366,37 @@ fun PillNavigationBarPreview() {
 fun SyncActionButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    isRefreshing: Boolean = false,
     containerColor: Color = MaterialTheme.colorScheme.outlineVariant,
     contentColor: Color = MaterialTheme.colorScheme.onBackground
 ) {
+    val infiniteTransition = rememberInfiniteTransition(label = "SyncRotation")
+    val rotation by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "Rotation"
+    )
+
     Box(
         modifier = modifier
             .size(32.dp)
             .background(containerColor, CircleShape)
-            .clickable { onClick() },
+            .clickable(enabled = !isRefreshing) { onClick() },
         contentAlignment = Alignment.Center
     ) {
         Icon(
-            painter = painterResource(id = R.drawable.ic_refresh),
-            contentDescription = "Sync Data Database Pipeline",
+            painter = painterResource(id = R.drawable.ic_sync),
+            contentDescription = "Sync Data",
             tint = contentColor,
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier
+                .size(20.dp)
+                .graphicsLayer {
+                    rotationZ = if (isRefreshing) rotation else 0f
+                }
         )
     }
 }

@@ -29,10 +29,10 @@ fun NewpassScreen() {
     ) {
         // 1. Greeting
         // Top spacing
-        Spacer(modifier = Modifier.height(112.dp))
+        Spacer(modifier = Modifier.weight(1f))
         DisplayText("Create New\nPassword")
         // Bottom spacing
-        Spacer(modifier = Modifier.height(112.dp))
+        Spacer(modifier = Modifier.weight(1f))
 
         // 2. Input Fields
         CustomInputField(
@@ -59,8 +59,8 @@ fun NewpassScreen() {
 
         //3. Save Button
         SubmitButton("Save", onClick = { })
-
-
+        
+        Spacer(modifier = Modifier.weight(0.5f))
     }
 }
 

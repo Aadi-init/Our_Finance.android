@@ -7,8 +7,10 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.lifecycle.lifecycleScope
@@ -26,6 +28,8 @@ import com.altf4.ourfinance.utils.IconSwitcher
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import kotlinx.coroutines.launch
+import com.altf4.ourfinance.utils.UserManager
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 
 class MainActivity : ComponentActivity() {
 
@@ -37,7 +41,24 @@ class MainActivity : ComponentActivity() {
     private val themeViewModel: ThemeViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Handle the splash screen transition.
+        val splashScreen = installSplashScreen()
+
         super.onCreate(savedInstanceState)
+
+        // Dismiss the system splash screen immediately to show the Compose animation
+        splashScreen.setKeepOnScreenCondition { false }
+
+        // Initialize offline data cache engine
+        com.altf4.ourfinance.utils.CacheManager.init(applicationContext)
+
+        // INSTANT PROFILE INJECTION:
+        // Load the roommate photos from local storage into memory instantly so
+        // there is zero delay when drawing the Dashboard UI icons.
+        val cachedProfiles = com.altf4.ourfinance.utils.CacheManager.getCachedProfiles("cached_user_profiles")
+        if (cachedProfiles != null) {
+            UserManager.syncUserProfiles(cachedProfiles)
+        }
 
         // Retrieve your saved preference values cleanly
         val sharedPrefs = getSharedPreferences("OurFinancePrefs", Context.MODE_PRIVATE)
@@ -71,7 +92,8 @@ class MainActivity : ComponentActivity() {
                             Log.d("AuthDebug", "Sign-in success for: $email")
                             handleGoogleSignInResult(navController, authViewModel, email, displayName, photoUrl, this@MainActivity)
                         }
-                    }
+                    },
+                    modifier = Modifier.fillMaxSize()
                 )
             }
         }

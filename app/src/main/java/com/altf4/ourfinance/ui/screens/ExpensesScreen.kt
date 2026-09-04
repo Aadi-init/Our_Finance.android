@@ -2,6 +2,9 @@ package com.altf4.ourfinance.ui.screens
 
 import android.app.DatePickerDialog
 import android.content.res.Configuration
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateColor
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -58,6 +61,7 @@ fun ExpensesScreen(
     navController: NavController,
     onAddExpenseClick: () -> Unit,
     onEntryClick: (ExpenseEntry) -> Unit,
+    highlightId: String? = null,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -83,6 +87,8 @@ fun ExpensesScreen(
         onFilterChange = { viewModel.setFilterType(it, currentUser.apiParamName) },
         onAddExpenseClick = onAddExpenseClick,
         onEntryClick = onEntryClick,
+        highlightId = highlightId,
+        isRefreshing = uiState.isLoading,
         onBackClick = {
             navController.navigate(Screen.Dashboard.route) {
                 popUpTo(Screen.Dashboard.route) { inclusive = true }
@@ -106,6 +112,8 @@ fun ExpensesScreenContent(
     onAddExpenseClick: () -> Unit,
     onEntryClick: (ExpenseEntry) -> Unit,
     onBackClick: () -> Unit,
+    isRefreshing: Boolean = false,
+    highlightId: String? = null,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -148,7 +156,8 @@ fun ExpensesScreenContent(
                 selectedMonth = selectedMonth,
                 selectedYear = selectedYear,
                 onDateSelected = onDateSelected,
-                onRefreshClick = onRefreshClick
+                onRefreshClick = onRefreshClick,
+                isRefreshing = isRefreshing
             )
             ExpensesContent(
                 state = uiState,
@@ -157,6 +166,7 @@ fun ExpensesScreenContent(
                 onFilterChange = onFilterChange,
                 onAddExpenseClick = onAddExpenseClick,
                 onEntryClick = onEntryClick,
+                highlightId = highlightId,
                 bottomPadding = paddingValues.calculateBottomPadding() // Passed to safely offset lists inside content padding
             )
         }
@@ -169,7 +179,8 @@ fun ExpensesHeader(
     selectedMonth: Int,
     selectedYear: Int,
     onDateSelected: (Int, Int) -> Unit,
-    onRefreshClick: () -> Unit
+    onRefreshClick: () -> Unit,
+    isRefreshing: Boolean = false
 ) {
     val context = LocalContext.current
     val calendar = Calendar.getInstance().apply {
@@ -194,18 +205,18 @@ fun ExpensesHeader(
         ) {
             Text(
                 text = "Expenses",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onBackground
             )
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                SyncActionButton(onClick = onRefreshClick)
+                SyncActionButton(onClick = onRefreshClick, isRefreshing = isRefreshing)
 
                 Spacer(modifier = Modifier.width(8.dp))
 
                 Box(
                     modifier = Modifier
+                        .fillMaxHeight(0.04f)
                         .clip(RoundedCornerShape(50))
                         .background(MaterialTheme.colorScheme.outlineVariant)
                         .clickable {
@@ -218,12 +229,11 @@ fun ExpensesHeader(
                             )
                             datePickerDialog.show()
                         }
-                        .padding(horizontal = 12.dp, vertical = 4.dp)
+                        .padding(horizontal = 12.dp, vertical = 8.dp)
                 ) {
                     Text(
                         text = monthName,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
+                        style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onBackground
                     )
                 }
@@ -234,13 +244,12 @@ fun ExpensesHeader(
 
         Text(
             text = "To Be Adjusted",
-            fontSize = 13.sp,
+            style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onBackground
         )
         Text(
             text = formatToFigmaTk(state.toBeAdjusted),
-            fontSize = 36.sp,
-            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.displaySmall,
             color = if (state.toBeAdjusted > 0) MaterialTheme.colorScheme.error else Color(0xFF22C55E)
         )
 
@@ -253,12 +262,12 @@ fun ExpensesHeader(
             Column {
                 Text(
                     text = "Total Expense",
-                    fontSize = 12.sp,
+                    style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 Text(
                     text = formatToFigmaTk(state.totalExpense),
-                    fontSize = 16.sp,
+                    style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
                 )
@@ -267,12 +276,12 @@ fun ExpensesHeader(
             Column(horizontalAlignment = Alignment.End) {
                 Text(
                     text = "Your Contribution",
-                    fontSize = 12.sp,
+                    style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 Text(
                     text = formatToFigmaTk(state.userContribution),
-                    fontSize = 16.sp,
+                    style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
                 )
@@ -289,14 +298,28 @@ fun ExpensesContent(
     onFilterChange: (String) -> Unit,
     onAddExpenseClick: () -> Unit,
     onEntryClick: (ExpenseEntry) -> Unit,
+    highlightId: String? = null,
     bottomPadding: androidx.compose.ui.unit.Dp = 0.dp
 ) {
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+
+    // Scroll to and highlight logic
+    LaunchedEffect(highlightId, state.filteredEntries) {
+        if (highlightId != null) {
+            val index = state.filteredEntries.indexOfFirst { it.id == highlightId }
+            if (index != -1) {
+                listState.animateScrollToItem(index)
+            }
+        }
+    }
+
     // Overlapping Box allows ledger cards to scroll seamlessly behind BOTH the filter bar AND the bottom bar
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
         // 1. SCROLLABLE LEDGER LIST (Passes full screen height behind floating elements)
         LazyColumn(
+            state = listState,
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(10.dp),
             contentPadding = PaddingValues(
@@ -310,6 +333,7 @@ fun ExpensesContent(
                 ExpenseItem(
                     entry = entry,
                     currentUserName = currentUser.apiParamName,
+                    isHighlighted = entry.id == highlightId,
                     onClick = { onEntryClick(entry) }
                 )
             }
@@ -322,7 +346,7 @@ fun ExpensesContent(
                 .background(
                     color = MaterialTheme.colorScheme.background.copy(alpha = 0.85f) // Smooth, glassmorphic translucency
                 )
-                .padding(start = 12.dp, end = 12.dp, top = 12.dp, bottom = 12.dp)
+                .padding(horizontal = 10.dp, vertical = 12.dp)
         ) {
             var expanded by remember { mutableStateOf(false) }
             Row(
@@ -336,8 +360,7 @@ fun ExpensesContent(
                 ) {
                     Text(
                         text = filterType,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onBackground
                     )
                     Icon(
@@ -347,14 +370,14 @@ fun ExpensesContent(
                     )
                     DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                         DropdownMenuItem(
-                            text = { Text("Your Entries") },
+                            text = { Text("Your Entries", style = MaterialTheme.typography.bodyMedium) },
                             onClick = {
                                 onFilterChange("Your Entries")
                                 expanded = false
                             }
                         )
                         DropdownMenuItem(
-                            text = { Text("All Entries") },
+                            text = { Text("All Entries", style = MaterialTheme.typography.bodyMedium) },
                             onClick = {
                                 onFilterChange("All Entries")
                                 expanded = false
@@ -365,12 +388,16 @@ fun ExpensesContent(
 
                 Box(
                     modifier = Modifier
-                        .size(30.dp)
+//                        .fillMaxWidth(0.1f)
+//                        .fillMaxHeight(0.045f)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f))
-                        .clickable { onAddExpenseClick() },
+                        .clickable { onAddExpenseClick() }
+                        .padding(5.dp),
                     contentAlignment = Alignment.Center
                 ) {
+
+
                     Icon(
                         painter = painterResource(id = R.drawable.ic_add),
                         contentDescription = "Add Expenses",
@@ -387,15 +414,27 @@ fun ExpensesContent(
 fun ExpenseItem(
     entry: ExpenseEntry,
     currentUserName: String,
+    isHighlighted: Boolean = false,
     onClick: () -> Unit
 ) {
     val dateNumeral = entry.timestamp.split(" ").firstOrNull()?.split("/")?.getOrNull(1)?.trimStart('0') ?: "1"
+
+    val infiniteTransition = rememberInfiniteTransition(label = "Blink")
+    val blinkColor by infiniteTransition.animateColor(
+        initialValue = MaterialTheme.colorScheme.surface,
+        targetValue = MaterialTheme.colorScheme.tertiaryContainer,
+        animationSpec = infiniteRepeatable(
+            animation = tween(700),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "ColorBlink"
+    )
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(MaterialTheme.colorScheme.surface)
+            .background(if (isHighlighted) blinkColor else MaterialTheme.colorScheme.surface)
             .clickable { onClick() }
             .padding(10.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -410,8 +449,7 @@ fun ExpenseItem(
             Text(
                 text = dateNumeral,
                 color = Color.White,
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp
+                style = MaterialTheme.typography.titleMedium
             )
         }
 
@@ -434,8 +472,7 @@ fun ExpenseItem(
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
                     text = if (entry.person == currentUserName) "You" else entry.person,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
+                    style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 if (entry.isEdited) {
@@ -453,7 +490,7 @@ fun ExpenseItem(
 
             Text(
                 text = entry.description,
-                fontSize = 12.sp,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -467,14 +504,14 @@ fun ExpenseItem(
         ) {
             Text(
                 text = formatToFigmaTk(entry.amount),
+                style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
                 color = MaterialTheme.colorScheme.onBackground
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = entry.category,
-                fontSize = 12.sp,
+                style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
             )
         }
@@ -511,7 +548,9 @@ fun ExpensesPreviewLight() {
             onFilterChange = {},
             onAddExpenseClick = {},
             onEntryClick = {},
-            onBackClick = {}
+            onBackClick = {},
+            isRefreshing = false,
+            highlightId = null
         )
     }
 }

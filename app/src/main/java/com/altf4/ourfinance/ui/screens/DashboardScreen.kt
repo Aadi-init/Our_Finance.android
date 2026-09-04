@@ -147,6 +147,7 @@ fun DashboardScreen(
             DashboardContent(
                 data = dashboardData,
                 toBeSettled = toBeSettled,
+                isRefreshing = uiState.isLoading,
                 currentUser = currentUser,
                 isNotificationViewActive = isNotificationViewActive,
                 notifications = notifications,
@@ -154,6 +155,21 @@ fun DashboardScreen(
                 onNotificationClick = {
                     isNotificationViewActive = true
                     viewModel.markNotificationsAsSeen()
+                },
+                onNotificationItemClick = { item ->
+                    when {
+                        item.header.contains("Expense", ignoreCase = true) -> {
+                            val route = if (item.targetId != null) "expenses?highlightId=${item.targetId}" else Screen.Expenses.route
+                            navController.navigate(route) { launchSingleTop = true }
+                        }
+                        item.header.contains("Settlement", ignoreCase = true) -> {
+                            val route = if (item.targetId != null) "settlements?highlightId=${item.targetId}" else Screen.Settlements.route
+                            navController.navigate(route) { launchSingleTop = true }
+                        }
+                        item.header.contains("Rent", ignoreCase = true) -> {
+                            navController.navigate(Screen.RentInvoice.route) { launchSingleTop = true }
+                        }
+                    }
                 },
                 onBackFromNotifications = { isNotificationViewActive = false },
                 onClearNotifications = { viewModel.clearNotifications() },
@@ -174,11 +190,13 @@ fun DashboardScreen(
 fun DashboardContent(
     data: DashboardResponse,
     toBeSettled: Double,
+    isRefreshing: Boolean,
     currentUser: GoogleUser,
     isNotificationViewActive: Boolean,
     notifications: List<NotificationItem>,
     hasNewNotifications: Boolean,
     onNotificationClick: () -> Unit,
+    onNotificationItemClick: (NotificationItem) -> Unit,
     onBackFromNotifications: () -> Unit,
     onClearNotifications: () -> Unit,
     onInfoClick: () -> Unit,
@@ -186,329 +204,354 @@ fun DashboardContent(
     onAddSettlementClick: () -> Unit,
     onSyncClick: () -> Unit
 ) {
-    Column(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 10.dp, vertical = 0.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        // --- 1. CENTERED PROFILE SECTION ---
+        val screenHeight = maxHeight
+        val isSmallScreen = screenHeight < 600.dp
+
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .weight(1.2f)
-                .statusBarsPadding()
-                .padding(top = 20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .fillMaxSize()
+                .padding(horizontal = 0.dp, vertical = if (isSmallScreen) 8.dp else 10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Image(
-                painter = rememberAsyncImagePainter(
-                    model = UserManager.getProfilePicture(currentUser.apiParamName)
-                ),
-                contentDescription = "Profile Picture",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(100.dp)
-                    .clip(CircleShape)
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Text(
-                text = "Hello!",
-                fontSize = 16.sp,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
-            )
-
-            Text(
-                text = currentUser.displayName ?: data.fullName,
-                fontSize = 32.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-        }
-
-        // --- 2. ACTIONS ROW (Notification | Sync) ABOVE CARDS ---
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 6.dp, vertical = 10.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Notification Button (Left)
-            Box(
-                modifier = Modifier
-                    .size(32.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.outlineVariant)
-                    .clickable {
-                        if (isNotificationViewActive) {
-                            onBackFromNotifications()
-                        } else {
-                            onNotificationClick()
-                        }
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_notification),
-                    contentDescription = "Notifications",
-                    tint = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.size(18.dp)
-                )
-
-                if (hasNewNotifications) {
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(top = 8.5.dp, end = 7.5.dp)
-                            .size(7.dp)
-                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
-                            .background(MaterialTheme.colorScheme.error, CircleShape)
-                    )
-                }
-            }
-
-            // Sync Button (Right)
-            SyncActionButton(
-                onClick = onSyncClick,
-                containerColor = MaterialTheme.colorScheme.outlineVariant,
-                contentColor = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.size(32.dp)
-            )
-        }
-
-        if (isNotificationViewActive) {
-            NotificationPanel(
-                notifications = notifications,
-                onBackClick = onBackFromNotifications,
-                onClearClick = onClearNotifications,
-                modifier = Modifier
-                    .weight(2f)
-                    .padding(bottom = 8.dp)
-            )
-        } else {
+            // --- 1. CENTERED PROFILE SECTION ---
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(2f)
-                    .padding(bottom = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                    .weight(if (isSmallScreen) 1f else 1.2f)
+                    .statusBarsPadding()
+                    .padding(top = if (isSmallScreen) 10.dp else 20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
-                // --- 3. YOUR RENT CARD ---
-                val breakdown = data.invoiceBreakdown
-                val totalCalculatedRent = (breakdown.rent + breakdown.electricity + breakdown.internet +
-                        breakdown.waterFilter + breakdown.househelp + breakdown.others + breakdown.adjustments)
+                Image(
+                    painter = rememberAsyncImagePainter(
+                        model = UserManager.getProfilePicture(currentUser.apiParamName)
+                    ),
+                    contentDescription = "Profile Picture",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(if (isSmallScreen) 80.dp else 100.dp)
+                        .clip(CircleShape)
+                )
 
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-                ) {
-                    Column(modifier = Modifier.padding(15.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.Top
-                        ) {
-                            Column {
-                                Text("Your Rent", fontSize = 13.sp, color = MaterialTheme.colorScheme.onBackground)
-                                Spacer(modifier = Modifier.height(3.dp))
-                                Text(
-                                    text = formatToFigmaTk(totalCalculatedRent),
-                                    fontSize = 24.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                            }
+                Spacer(modifier = Modifier.height(if (isSmallScreen) 8.dp else 12.dp))
 
-                            IconButton(
-                                onClick = onInfoClick,
-                                colors = IconButtonDefaults.iconButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                    contentColor = MaterialTheme.colorScheme.onPrimary
-                                ),
-                                modifier = Modifier.size(24.dp)
-                            ) {
-                                Icon(
-                                    painter = androidx.compose.ui.res.painterResource(id = com.altf4.ourfinance.R.drawable.ic_invoice),
-                                    contentDescription = "Invoice Breakdown",
-                                    modifier = Modifier.size(14.dp),
-                                    tint = MaterialTheme.colorScheme.onBackground
-                                )
-                            }
-                        }
+                Text(
+                    text = "Hello!",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
+                )
 
-                        Spacer(modifier = Modifier.height(20.dp))
+                Text(
+                    text = currentUser.displayName ?: data.fullName,
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.Bottom
-                        ) {
-                            val calendar = java.util.Calendar.getInstance()
-                            val monthYearFormatter = java.text.SimpleDateFormat("MMMM yyyy", Locale.US)
-                            val dynamicDueDate = "10th ${monthYearFormatter.format(calendar.time)}"
-
-                            Text(
-                                text = "Due on $dynamicDueDate",
-                                fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 1f)
-                            )
-
-                            val statusBgColor = when {
-                                data.rentStatus.equals("Pending", ignoreCase = true) -> MaterialTheme.colorScheme.error
-                                data.rentStatus.equals("Paid", ignoreCase = true) -> MaterialTheme.colorScheme.tertiary
-                                data.rentStatus.equals("Outdated", ignoreCase = true) -> MaterialTheme.colorScheme.surfaceContainerHigh
-                                else -> MaterialTheme.colorScheme.tertiary
-                            }
-
-                            val statusTextColor = if (data.rentStatus.equals("Outdated", ignoreCase = true)) {
-                                MaterialTheme.colorScheme.onBackground
+            // --- 2. ACTIONS ROW (Notification | Sync) ABOVE CARDS ---
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(0.95f)
+                    .padding(vertical = if (isSmallScreen) 6.dp else 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Notification Button (Left)
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.outlineVariant)
+                        .clickable {
+                            if (isNotificationViewActive) {
+                                onBackFromNotifications()
                             } else {
-                                MaterialTheme.colorScheme.onPrimary
+                                onNotificationClick()
                             }
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_notification),
+                        contentDescription = "Notifications",
+                        tint = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier.size(18.dp)
+                    )
 
-//                            val statusTextColor = MaterialTheme.colorScheme.onPrimary
-
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(50))
-                                    .background(statusBgColor)
-                                    .padding(horizontal = 10.dp, vertical = 0.dp)
-                            ) {
-                                Text(
-                                    text = data.rentStatus,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = statusTextColor
-                                )
-                            }
-                        }
+                    if (hasNewNotifications) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(top = 8.5.dp, end = 7.5.dp)
+                                .size(7.dp)
+                                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
+                                .background(MaterialTheme.colorScheme.error, CircleShape)
+                        )
                     }
                 }
 
-                // --- 4. YOUR EXPENSE CARD ---
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                // Sync Button (Right)
+                SyncActionButton(
+                    onClick = onSyncClick,
+                    isRefreshing = isRefreshing,
+                    containerColor = MaterialTheme.colorScheme.outlineVariant,
+                    contentColor = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
+
+            if (isNotificationViewActive) {
+                NotificationPanel(
+                    notifications = notifications,
+                    onBackClick = onBackFromNotifications,
+                    onClearClick = onClearNotifications,
+                    onItemClick = onNotificationItemClick,
+                    modifier = Modifier
+                        .fillMaxWidth(0.95f)
+                        .weight(2f)
+                        .padding(bottom = 8.dp)
+                )
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth(0.95f)
+                        .weight(2f)
+                        .padding(bottom = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(if (isSmallScreen) 6.dp else 10.dp)
                 ) {
-                    Column(modifier = Modifier.padding(15.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.Top
-                        ) {
-                            Column {
-                                Text("Your Expense", fontSize = 13.sp, color = MaterialTheme.colorScheme.onBackground)
-                                Spacer(modifier = Modifier.height(3.dp))
-                                Text(
-                                    text = formatToFigmaTk(data.yourExpense),
-                                    fontSize = 22.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                            }
+                    // --- 3. YOUR RENT CARD ---
+                    val breakdown = data.invoiceBreakdown
+                    val totalCalculatedRent = (breakdown.rent + breakdown.electricity + breakdown.internet +
+                            breakdown.waterFilter + breakdown.househelp + breakdown.others + breakdown.adjustments)
 
-                            IconButton(
-                                onClick = onAddExpenseClick,
-                                colors = IconButtonDefaults.iconButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                    contentColor = MaterialTheme.colorScheme.onPrimary
-                                ),
-                                modifier = Modifier.size(24.dp)
+                    Card(
+                        modifier = Modifier.fillMaxWidth().weight(1f),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    ) {
+                        Column(modifier = Modifier.padding(if (isSmallScreen) 10.dp else 15.dp), verticalArrangement = Arrangement.Center) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.Top
                             ) {
-                                Icon(
-                                    painter = androidx.compose.ui.res.painterResource(id = com.altf4.ourfinance.R.drawable.ic_add),
-                                    contentDescription = "Add Expenses",
-                                    modifier = Modifier.size(14.dp),
-                                    tint = MaterialTheme.colorScheme.onBackground
-                                )
+                                Column {
+                                    Text(
+                                        "Your Rent",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onBackground
+                                    )
+                                    Spacer(modifier = Modifier.height(3.dp))
+                                    Text(
+                                        text = formatToFigmaTk(totalCalculatedRent),
+                                        style = MaterialTheme.typography.titleLarge,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+
+                                IconButton(
+                                    onClick = onInfoClick,
+                                    colors = IconButtonDefaults.iconButtonColors(
+                                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                        contentColor = MaterialTheme.colorScheme.onPrimary
+                                    ),
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Icon(
+                                        painter = androidx.compose.ui.res.painterResource(id = com.altf4.ourfinance.R.drawable.ic_invoice),
+                                        contentDescription = "Invoice Breakdown",
+                                        modifier = Modifier.size(14.dp),
+                                        tint = MaterialTheme.colorScheme.onBackground
+                                    )
+                                }
                             }
-                        }
 
-                        Spacer(modifier = Modifier.height(15.dp))
+                            Spacer(modifier = Modifier.weight(1f))
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.Bottom
-                        ) {
-                            Column {
-                                Text("Contributions", fontSize = 12.sp, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 1f))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.Bottom
+                            ) {
+                                val calendar = java.util.Calendar.getInstance()
+                                val monthYearFormatter = java.text.SimpleDateFormat("MMMM yyyy", Locale.US)
+                                val dynamicDueDate = "10th ${monthYearFormatter.format(calendar.time)}"
+
                                 Text(
-                                    text = formatToFigmaTk(data.contributions),
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onSurface
+                                    text = "Due on $dynamicDueDate",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onBackground
                                 )
-                            }
 
-                            Column(horizontalAlignment = Alignment.End) {
-                                Text("Balance", fontSize = 12.sp, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 1f))
-                                Text(
-                                    text = formatToFigmaTk(data.balance),
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (data.balance < 0) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.error
-                                )
+                                val statusBgColor = when {
+                                    data.rentStatus.equals("Pending", ignoreCase = true) -> MaterialTheme.colorScheme.error
+                                    data.rentStatus.equals("Paid", ignoreCase = true) -> MaterialTheme.colorScheme.tertiary
+                                    data.rentStatus.equals("Outdated", ignoreCase = true) -> MaterialTheme.colorScheme.surfaceContainerHigh
+                                    else -> MaterialTheme.colorScheme.tertiary
+                                }
+
+                                val statusTextColor = if (data.rentStatus.equals("Outdated", ignoreCase = true)) {
+                                    MaterialTheme.colorScheme.onBackground
+                                } else {
+                                    MaterialTheme.colorScheme.onPrimary
+                                }
+
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(50))
+                                        .background(statusBgColor)
+                                        .padding(horizontal = 10.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = data.rentStatus,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = statusTextColor
+                                    )
+                                }
                             }
                         }
                     }
-                }
 
-                // --- 5. YOUR SETTLEMENT CARD ---
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-                ) {
-                    Column(modifier = Modifier.padding(15.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.Top
-                        ) {
-                            Column {
-                                Text("Your Settlement", fontSize = 13.sp, color = MaterialTheme.colorScheme.onBackground)
+                    // --- 4. YOUR EXPENSE CARD ---
+                    Card(
+                        modifier = Modifier.fillMaxWidth().weight(1f),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    ) {
+                        Column(modifier = Modifier.padding(if (isSmallScreen) 10.dp else 15.dp), verticalArrangement = Arrangement.Center) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.Top
+                            ) {
+                                Column {
+                                    Text(
+                                        "Your Expense",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onBackground
+                                    )
+                                    Spacer(modifier = Modifier.height(3.dp))
+                                    Text(
+                                        text = formatToFigmaTk(data.yourExpense),
+                                        style = MaterialTheme.typography.titleLarge,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+
+                                IconButton(
+                                    onClick = onAddExpenseClick,
+                                    colors = IconButtonDefaults.iconButtonColors(
+                                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                        contentColor = MaterialTheme.colorScheme.onPrimary
+                                    ),
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Icon(
+                                        painter = androidx.compose.ui.res.painterResource(id = com.altf4.ourfinance.R.drawable.ic_add),
+                                        contentDescription = "Add Expenses",
+                                        modifier = Modifier.size(14.dp),
+                                        tint = MaterialTheme.colorScheme.onBackground
+                                    )
+                                }
                             }
 
-                            IconButton(
-                                onClick = onAddSettlementClick,
-                                colors = IconButtonDefaults.iconButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                    contentColor = MaterialTheme.colorScheme.onPrimary
-                                ),
-                                modifier = Modifier.size(24.dp)
+                            Spacer(modifier = Modifier.weight(1f))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.Bottom
                             ) {
-                                Icon(
-                                    painter = androidx.compose.ui.res.painterResource(id = com.altf4.ourfinance.R.drawable.ic_add),
-                                    contentDescription = "Add Settlements",
-                                    modifier = Modifier.size(14.dp),
-                                    tint = MaterialTheme.colorScheme.onBackground
-                                )
+                                Column {
+                                    Text(
+                                        "Contributions",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onBackground
+                                    )
+                                    Text(
+                                        text = formatToFigmaTk(data.contributions),
+                                        style = if (isSmallScreen) MaterialTheme.typography.labelMedium else MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+
+                                Column(horizontalAlignment = Alignment.End) {
+                                    Text(
+                                        "Balance",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onBackground
+                                    )
+                                    Text(
+                                        text = formatToFigmaTk(data.balance),
+                                        style = if (isSmallScreen) MaterialTheme.typography.labelMedium else MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (data.balance < 0) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.error
+                                    )
+                                }
                             }
                         }
+                    }
 
-                        Spacer(modifier = Modifier.height(15.dp))
+                    // --- 5. YOUR SETTLEMENT CARD ---
+                    Card(
+                        modifier = Modifier.fillMaxWidth().weight(0.75f),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    ) {
+                        Column(modifier = Modifier.padding(if (isSmallScreen) 10.dp else 15.dp), verticalArrangement = Arrangement.Center) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.Top
+                            ) {
+                                Column {
+                                    Text(
+                                        "Your Settlement",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onBackground
+                                    )
+                                }
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.Bottom
-                        ) {
-                            Text(
-                                text = formatToFigmaTk(toBeSettled),
-                                fontSize = 22.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (toBeSettled < 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.tertiary
-                            )
+                                IconButton(
+                                    onClick = onAddSettlementClick,
+                                    colors = IconButtonDefaults.iconButtonColors(
+                                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                        contentColor = MaterialTheme.colorScheme.onPrimary
+                                    ),
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Icon(
+                                        painter = androidx.compose.ui.res.painterResource(id = com.altf4.ourfinance.R.drawable.ic_add),
+                                        contentDescription = "Add Settlements",
+                                        modifier = Modifier.size(14.dp),
+                                        tint = MaterialTheme.colorScheme.onBackground
+                                    )
+                                }
+                            }
 
-                            RoommateAvatarStack(currentUser = currentUser.apiParamName)
+                            Spacer(modifier = Modifier.weight(1f))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.Bottom
+                            ) {
+                                Text(
+                                    text = formatToFigmaTk(toBeSettled),
+                                    style = MaterialTheme.typography.titleLarge, //else MaterialTheme.typography.headlineLarge,
+                                    color = if (toBeSettled < 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.tertiary
+                                )
+
+                                RoommateAvatarStack(currentUser = currentUser.apiParamName)
+                            }
                         }
                     }
                 }
@@ -522,6 +565,7 @@ fun NotificationPanel(
     notifications: List<NotificationItem>,
     onBackClick: () -> Unit,
     onClearClick: () -> Unit,
+    onItemClick: (NotificationItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -591,7 +635,10 @@ fun NotificationPanel(
                     }
                 } else {
                     notifications.forEach { item ->
-                        NotificationItemRow(item)
+                        NotificationItemRow(
+                            item = item,
+                            onClick = { onItemClick(item) }
+                        )
                     }
                 }
             }
@@ -600,7 +647,10 @@ fun NotificationPanel(
 }
 
 @Composable
-fun NotificationItemRow(item: NotificationItem) {
+fun NotificationItemRow(
+    item: NotificationItem,
+    onClick: () -> Unit
+) {
     val dayOfMonth = try {
         val date = SimpleDateFormat("MM/dd/yyyy HH:mm:ss", Locale.US).parse(item.timestamp)
         if (date != null) {
@@ -617,6 +667,7 @@ fun NotificationItemRow(item: NotificationItem) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .background(MaterialTheme.colorScheme.inverseOnSurface)
+            .clickable { onClick() }
             .padding(10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -739,11 +790,13 @@ fun DashboardPreviewLight() {
                 DashboardContent(
                     data = MockDashboardData,
                     toBeSettled = MockDashboardData.settlement,
+                    isRefreshing = false,
                     currentUser = MockGoogleUser,
                     isNotificationViewActive = false,
                     notifications = emptyList(),
                     hasNewNotifications = true,
                     onNotificationClick = {},
+                    onNotificationItemClick = {},
                     onBackFromNotifications = {},
                     onClearNotifications = {},
                     onInfoClick = {},
@@ -777,11 +830,13 @@ fun DashboardPreviewDark() {
                 DashboardContent(
                     data = MockDashboardData,
                     toBeSettled = MockDashboardData.settlement,
+                    isRefreshing = false,
                     currentUser = MockGoogleUser,
                     isNotificationViewActive = false,
                     notifications = emptyList(),
                     hasNewNotifications = true,
                     onNotificationClick = {},
+                    onNotificationItemClick = {},
                     onBackFromNotifications = {},
                     onClearNotifications = {},
                     onInfoClick = {},
@@ -810,11 +865,13 @@ fun NotificationPreviewLight() {
                 DashboardContent(
                     data = MockDashboardData,
                     toBeSettled = MockDashboardData.settlement,
+                    isRefreshing = false,
                     currentUser = MockGoogleUser,
                     isNotificationViewActive = true,
                     notifications = MockNotifications,
                     hasNewNotifications = false,
                     onNotificationClick = {},
+                    onNotificationItemClick = {},
                     onBackFromNotifications = {},
                     onClearNotifications = {},
                     onInfoClick = {},
@@ -847,11 +904,13 @@ fun NotificationPreviewDark() {
                 DashboardContent(
                     data = MockDashboardData,
                     toBeSettled = MockDashboardData.settlement,
+                    isRefreshing = false,
                     currentUser = MockGoogleUser,
                     isNotificationViewActive = true,
                     notifications = MockNotifications,
                     hasNewNotifications = false,
                     onNotificationClick = {},
+                    onNotificationItemClick = {},
                     onBackFromNotifications = {},
                     onClearNotifications = {},
                     onInfoClick = {},

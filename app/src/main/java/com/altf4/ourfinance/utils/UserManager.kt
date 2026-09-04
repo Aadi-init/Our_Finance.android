@@ -20,6 +20,11 @@ object UserManager {
      */
     fun syncUserProfiles(profiles: Map<String, String>?) {
         if (profiles == null) return
+
+        // Save directly to offline storage first
+        CacheManager.saveCachedProfiles("cached_user_profiles", profiles)
+
+        // Update reactive memory layer for UI rendering
         profiles.forEach { (name, picUrl) ->
             val existing = userMap[name]
             if (existing != null) {

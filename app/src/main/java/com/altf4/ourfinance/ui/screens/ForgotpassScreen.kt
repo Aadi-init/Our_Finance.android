@@ -30,21 +30,20 @@ fun ForgotpassScreen() {
     ) {
         // 1. Greeting
         // Top spacing
-        Spacer(modifier = Modifier.height(112.dp))
+        Spacer(modifier = Modifier.weight(1f))
         DisplayText("Forgot\nPassword")
         // Bottom spacing
-        Spacer(modifier = Modifier.height(112.dp))
+        Spacer(modifier = Modifier.weight(1f))
 
         //2. Text Info.
         Text(
             text = "We will send a code on your mail",
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontSize = 12.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+            style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 4.dp)
-                .align(Alignment.Start)
         )
 
         //3. Custom Input Field
@@ -58,6 +57,8 @@ fun ForgotpassScreen() {
 
         //4. Send Mail Button
         SubmitButton("Send Mail", onClick = { })
+        
+        Spacer(modifier = Modifier.weight(0.5f))
     }
 }
 

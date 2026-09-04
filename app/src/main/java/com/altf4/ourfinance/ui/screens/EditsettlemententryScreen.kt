@@ -6,11 +6,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.CallReceived
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -146,197 +144,208 @@ fun EditsettlemententryScreen(
             )
         }
     ) { paddingValues ->
-        Column(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // --- A. DATE PICKER FIELD ---
-            FormField(label = "Date") {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .clickable(enabled = !isSaving && canEditInitial) {
-                            DatePickerDialog(
-                                context,
-                                { _, year, month, day ->
-                                    selectedDate = Calendar.getInstance().apply { set(year, month, day) }
-                                },
-                                selectedDate.get(Calendar.YEAR),
-                                selectedDate.get(Calendar.MONTH),
-                                selectedDate.get(Calendar.DAY_OF_MONTH)
-                            ).show()
-                        }
-                        .padding(horizontal = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = dateFormatter.format(selectedDate.time),
-                        color = if (canEditInitial) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                        fontSize = 16.sp
-                    )
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_calendar),
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-            }
+            val screenHeight = maxHeight
+            val isSmallScreen = screenHeight < 600.dp
 
-            // --- B. TWO-COLUMN ROW: CATEGORY & PERSON ---
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 12.dp, vertical = if (isSmallScreen) 10.dp else 20.dp),
+                verticalArrangement = Arrangement.spacedBy(if (isSmallScreen) 8.dp else 12.dp)
             ) {
-                // Category (Received/Sent)
-                FormField(label = "Category", modifier = Modifier.weight(1f)) {
-                    Box {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(56.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(MaterialTheme.colorScheme.surfaceVariant)
-                                .clickable(enabled = !isSaving && canEditInitial) { isTypeDropdownExpanded = true }
-                                .padding(horizontal = 16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            val icon = if (type == "Received") Icons.AutoMirrored.Filled.CallReceived else Icons.Default.CallMade
-                            val color = if (type == "Received") MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.tertiary
-                            
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(imageVector = icon, contentDescription = null, tint = color, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(text = type, color = color, fontSize = 16.sp)
+                // --- A. DATE PICKER FIELD ---
+                FormField(label = "Date") {   //, modifier = Modifier.weight(1f)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight(0.08f)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .clickable(enabled = !isSaving && canEditInitial) {
+                                DatePickerDialog(
+                                    context,
+                                    { _, year, month, day ->
+                                        selectedDate = Calendar.getInstance().apply { set(year, month, day) }
+                                    },
+                                    selectedDate.get(Calendar.YEAR),
+                                    selectedDate.get(Calendar.MONTH),
+                                    selectedDate.get(Calendar.DAY_OF_MONTH)
+                                ).show()
                             }
-                            if (canEditInitial) {
-                                Icon(Icons.Default.ArrowDropDown, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                        }
-                        DropdownMenu(expanded = isTypeDropdownExpanded, onDismissRequest = { isTypeDropdownExpanded = false }) {
-                            DropdownMenuItem(
-                                text = { Text("Received") },
-                                onClick = { type = "Received"; isTypeDropdownExpanded = false }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Sent") },
-                                onClick = { type = "Sent"; isTypeDropdownExpanded = false }
-                            )
-                        }
+                            .padding(horizontal = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = dateFormatter.format(selectedDate.time),
+                            color = if (canEditInitial) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_calendar),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(24.dp)
+                        )
                     }
                 }
 
-                // Person
-                FormField(label = "Person", modifier = Modifier.weight(1f)) {
-                    Box {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(56.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(MaterialTheme.colorScheme.surfaceVariant)
-                                .clickable(enabled = !isSaving && canEditInitial) { isPersonDropdownExpanded = true }
-                                .padding(horizontal = 16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                Image(
-                                    painter = rememberAsyncImagePainter(model = UserManager.getProfilePicture(person)),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(24.dp).clip(CircleShape),
-                                    contentScale = ContentScale.Crop
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = if (person == currentUser.apiParamName) "You" else person,
-                                    color = if (canEditInitial) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                                    fontSize = 16.sp,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
+                // --- B. TWO-COLUMN ROW: CATEGORY & PERSON ---
+                Row(
+                    modifier = Modifier.fillMaxWidth(),   //.weight(1f),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // Category (Received/Sent)
+                    FormField(label = "Category", modifier = Modifier.weight(1f)) {
+                        Box {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .fillMaxHeight(0.09f)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                                    .clickable(enabled = !isSaving && canEditInitial) { isTypeDropdownExpanded = true }
+                                    .padding(horizontal = 16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                val icon = if (type == "Received") Icons.AutoMirrored.Filled.CallReceived else Icons.Default.CallMade
+                                val color = if (type == "Received") MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.tertiary
+                                
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(imageVector = icon, contentDescription = null, tint = color, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(text = type, color = color, style = MaterialTheme.typography.bodyLarge)
+                                }
+                                if (canEditInitial) {
+                                    Icon(Icons.Default.ArrowDropDown, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
                             }
-                            if (canEditInitial) {
-                                Icon(Icons.Default.ArrowDropDown, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                        }
-                        DropdownMenu(expanded = isPersonDropdownExpanded, onDismissRequest = { isPersonDropdownExpanded = false }) {
-                            listOf("Arnab", "Sadman", "Sabbir").filter { it != currentUser.apiParamName }.forEach { name ->
+                            DropdownMenu(expanded = isTypeDropdownExpanded, onDismissRequest = { isTypeDropdownExpanded = false }) {
                                 DropdownMenuItem(
-                                    text = { Text(name) },
-                                    onClick = { person = name; isPersonDropdownExpanded = false }
+                                    text = { Text("Received", style = MaterialTheme.typography.bodyMedium) },
+                                    onClick = { type = "Received"; isTypeDropdownExpanded = false }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Sent", style = MaterialTheme.typography.bodyMedium) },
+                                    onClick = { type = "Sent"; isTypeDropdownExpanded = false }
                                 )
                             }
                         }
                     }
+
+                    // Person
+                    FormField(label = "Person", modifier = Modifier.weight(1f)) {
+                        Box {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .fillMaxHeight(0.09f)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                                    .clickable(enabled = !isSaving && canEditInitial) { isPersonDropdownExpanded = true }
+                                    .padding(horizontal = 16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                    Image(
+                                        painter = rememberAsyncImagePainter(model = UserManager.getProfilePicture(person)),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(if (isSmallScreen) 20.dp else 24.dp).clip(CircleShape),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = if (person == currentUser.apiParamName) "You" else person,
+                                        color = if (canEditInitial) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                                if (canEditInitial) {
+                                    Icon(Icons.Default.ArrowDropDown, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                            }
+                            DropdownMenu(expanded = isPersonDropdownExpanded, onDismissRequest = { isPersonDropdownExpanded = false }) {
+                                listOf("Arnab", "Sadman", "Sabbir").filter { it != currentUser.apiParamName }.forEach { name ->
+                                    DropdownMenuItem(
+                                        text = { Text(name, style = MaterialTheme.typography.bodyMedium) },
+                                        onClick = { person = name; isPersonDropdownExpanded = false }
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
-            }
 
-            // --- C. AMOUNT FIELD ---
-            FormField(label = "Amount") {
-                TextField(
-                    value = amount,
-                    onValueChange = { if (canEditInitial) { handleAmountChange(it); amountError = false } },
-                    readOnly = !canEditInitial,
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = !isSaving,
-                    isError = amountError,
-                    shape = RoundedCornerShape(10.dp),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        focusedTextColor = MaterialTheme.colorScheme.onBackground,
-                        unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
-                    ),
-                    prefix = { Text("Tk. ", color = MaterialTheme.colorScheme.onBackground, fontSize = 16.sp) },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    textStyle = LocalTextStyle.current.copy(fontSize = 16.sp)
-                )
-            }
-
-            // --- D. DESCRIPTION FIELD ---
-            FormField(label = "Description") {
-                TextField(
-                    value = description,
-                    onValueChange = { if (canEditInitial) description = it },
-                    readOnly = !canEditInitial,
-                    modifier = Modifier.fillMaxWidth().height(140.dp),
-                    enabled = !isSaving,
-                    shape = RoundedCornerShape(10.dp),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        focusedTextColor = MaterialTheme.colorScheme.onBackground,
-                        unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
-                    ),
-                    placeholder = { Text("Add description", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f), fontSize = 14.sp) },
-                    textStyle = LocalTextStyle.current.copy(fontSize = 16.sp)
-                )
-            }
-
-            // --- E. EDIT HISTORY SECTION ---
-            if (entry.editCredential.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(8.dp))
-                entry.editCredential.forEach { history ->
-                    EditHistoryItem(
-                        history = history,
-                        currentUserName = currentUser.apiParamName,
-                        currentUserDisplayName = currentUser.displayName ?: ""
+                // --- C. AMOUNT FIELD ---
+                FormField(label = "Amount") {  //, modifier = Modifier.weight(1f)
+                    TextField(
+                        value = amount,
+                        onValueChange = { if (canEditInitial) { handleAmountChange(it); amountError = false } },
+                        readOnly = !canEditInitial,
+                        modifier = Modifier.fillMaxWidth().fillMaxHeight(0.115f),
+                        enabled = !isSaving,
+                        isError = amountError,
+                        shape = RoundedCornerShape(10.dp),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent
+                        ),
+                        prefix = { Text("Tk. ", color = MaterialTheme.colorScheme.onBackground, style = MaterialTheme.typography.bodyLarge) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        textStyle = MaterialTheme.typography.bodyLarge
                     )
+                }
+
+                // --- D. DESCRIPTION FIELD ---
+                FormField(label = "Description") {     //, modifier = Modifier.weight(2f)
+                    TextField(
+                        value = description,
+                        onValueChange = { if (canEditInitial) description = it },
+                        readOnly = !canEditInitial,
+                        modifier = Modifier.fillMaxWidth().fillMaxHeight(0.3f),
+                        enabled = !isSaving,
+                        shape = RoundedCornerShape(10.dp),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent
+                        ),
+                        placeholder = { Text("Add description", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f), style = MaterialTheme.typography.bodyMedium) },
+                        textStyle = MaterialTheme.typography.bodyLarge
+                    )
+                }
+
+                // --- E. EDIT HISTORY SECTION ---
+                if (entry.editCredential.isNotEmpty()) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        entry.editCredential.take(if (isSmallScreen) 1 else 3).forEach { history ->
+                            EditHistoryItem(
+                                history = history,
+                                currentUserName = currentUser.apiParamName,
+                                currentUserDisplayName = currentUser.displayName ?: ""
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -365,16 +374,16 @@ private fun EditHistoryItem(history: EditHistory, currentUserName: String, curre
                 contentScale = ContentScale.Crop
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text(text = displayName, color = MaterialTheme.colorScheme.error, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+            Text(text = displayName, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium)
         }
-        Text(text = history.time, color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
+        Text(text = history.time, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelSmall)
     }
 }
 
 @Composable
 private fun FormField(label: String, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(text = label, fontSize = 12.sp, color = MaterialTheme.colorScheme.surfaceContainerLowest)
+        Text(text = label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f))
         content()
     }
 }

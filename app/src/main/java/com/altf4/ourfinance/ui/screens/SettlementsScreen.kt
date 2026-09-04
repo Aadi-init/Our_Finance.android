@@ -1,6 +1,9 @@
 package com.altf4.ourfinance.ui.screens
 
 import android.app.DatePickerDialog
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateColor
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -62,6 +65,7 @@ fun SettlementsScreen(
     navController: NavController,
     onAddSettlementClick: () -> Unit,
     onEntryClick: (TransactionEntry) -> Unit,
+    highlightId: String? = null,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -116,7 +120,8 @@ fun SettlementsScreen(
                 selectedYear = selectedYear,
                 currentUser = currentUser,
                 onDateSelected = { m, y -> viewModel.setDateFilter(m, y, currentUser.apiParamName) },
-                onRefreshClick = { viewModel.fetchSettlements(currentUser.apiParamName, forceRefresh = true) }
+                onRefreshClick = { viewModel.fetchSettlements(currentUser.apiParamName, forceRefresh = true) },
+                isRefreshing = uiState.isLoading
             )
 
             Box(modifier = Modifier.fillMaxSize()) {
@@ -129,6 +134,7 @@ fun SettlementsScreen(
                     onTypeFilterChange = { viewModel.setTypeFilter(it, currentUser.apiParamName) },
                     onAddSettlementClick = onAddSettlementClick,
                     onEntryClick = onEntryClick,
+                    highlightId = highlightId,
                     bottomPadding = paddingValues.calculateBottomPadding()
                 )
             }
@@ -143,7 +149,8 @@ fun SettlementsHeader(
     selectedYear: Int,
     currentUser: GoogleUser,
     onDateSelected: (Int, Int) -> Unit,
-    onRefreshClick: () -> Unit
+    onRefreshClick: () -> Unit,
+    isRefreshing: Boolean = false
 ) {
     val context = LocalContext.current
     val calendar = Calendar.getInstance().apply {
@@ -168,18 +175,18 @@ fun SettlementsHeader(
         ) {
             Text(
                 text = "Settlements",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onBackground
             )
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                SyncActionButton(onClick = onRefreshClick)
+                SyncActionButton(onClick = onRefreshClick, isRefreshing = isRefreshing)
 
                 Spacer(modifier = Modifier.width(8.dp))
 
                 Box(
                     modifier = Modifier
+                        .fillMaxHeight(0.04f)
                         .clip(RoundedCornerShape(50))
                         .background(MaterialTheme.colorScheme.outlineVariant)
                         .clickable {
@@ -192,12 +199,11 @@ fun SettlementsHeader(
                             )
                             datePickerDialog.show()
                         }
-                        .padding(horizontal = 12.dp, vertical = 4.dp)
+                        .padding(horizontal = 12.dp, vertical = 8.dp)
                 ) {
                     Text(
                         text = monthName,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
+                        style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onBackground
                     )
                 }
@@ -206,11 +212,10 @@ fun SettlementsHeader(
 
         Spacer(modifier = Modifier.height(30.dp))
 
-        Text(text = "To Be Settled", fontSize = 13.sp, color = MaterialTheme.colorScheme.onBackground)
+        Text(text = "To Be Settled", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onBackground)
         Text(
             text = formatToFigmaTk(state.toBeSettled),
-            fontSize = 36.sp,
-            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.displaySmall,
             color = if (state.toBeSettled >= 0) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.error
         )
 
@@ -230,11 +235,11 @@ fun SettlementsHeader(
                             contentScale = ContentScale.Crop
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(text = peerName, fontSize = 12.sp, color = MaterialTheme.colorScheme.onBackground)
+                        Text(text = peerName, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onBackground)
                     }
                     Text(
                         text = formatToFigmaTk(balance),
-                        fontSize = 16.sp,
+                        style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Bold,
                         color = if (balance >= 0) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.error
                     )
@@ -254,13 +259,26 @@ fun SettlementsContent(
     onTypeFilterChange: (String) -> Unit,
     onAddSettlementClick: () -> Unit,
     onEntryClick: (TransactionEntry) -> Unit,
+    highlightId: String? = null,
     bottomPadding: androidx.compose.ui.unit.Dp = 0.dp
 ) {
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+
+    LaunchedEffect(highlightId, state.filteredEntries) {
+        if (highlightId != null) {
+            val index = state.filteredEntries.indexOfFirst { it.id == highlightId }
+            if (index != -1) {
+                listState.animateScrollToItem(index)
+            }
+        }
+    }
+
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
         // 1. SCROLLABLE SETTLEMENTS LIST (Occupies full space behind overlays)
         LazyColumn(
+            state = listState,
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(10.dp),
             contentPadding = PaddingValues(
@@ -271,7 +289,12 @@ fun SettlementsContent(
             )
         ) {
             items(state.filteredEntries) { entry ->
-                TransactionItem(entry = entry, currentUserName = currentUser.apiParamName, onClick = { onEntryClick(entry) })
+                TransactionItem(
+                    entry = entry,
+                    currentUserName = currentUser.apiParamName,
+                    isHighlighted = entry.id == highlightId,
+                    onClick = { onEntryClick(entry) }
+                )
             }
         }
 
@@ -306,10 +329,12 @@ fun SettlementsContent(
 
                 Box(
                     modifier = Modifier
-                        .size(30.dp)
+//                        .fillMaxWidth(0.15f)
+//                        .fillMaxHeight(0.045f)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f))
-                        .clickable { onAddSettlementClick() },
+                        .clickable { onAddSettlementClick() }
+                        .padding(5.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -336,6 +361,7 @@ fun FilterPill(
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
+            .fillMaxHeight(0.045f)
             .clip(RoundedCornerShape(50))
             .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f))
             .clickable { expanded = true }
@@ -343,12 +369,12 @@ fun FilterPill(
     ) {
         Text(
             text = "$label ",
-            fontSize = 12.sp,
+            style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
         )
         Text(
             text = value,
-            fontSize = 12.sp,
+            style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground
         )
@@ -365,7 +391,7 @@ fun FilterPill(
         ) {
             options.forEach { option ->
                 DropdownMenuItem(
-                    text = { Text(option) },
+                    text = { Text(option, style = MaterialTheme.typography.bodyMedium) },
                     onClick = {
                         onSelected(option)
                         expanded = false
@@ -380,16 +406,28 @@ fun FilterPill(
 fun TransactionItem(
     entry: TransactionEntry,
     currentUserName: String,
+    isHighlighted: Boolean = false,
     onClick: () -> Unit
 ) {
     val dateNumeral = entry.timestamp.split(" ").firstOrNull()?.split("/")?.getOrNull(1)?.trimStart('0') ?: "1"
     val isSent = entry.from == currentUserName
 
+    val infiniteTransition = rememberInfiniteTransition(label = "Blink")
+    val blinkColor by infiniteTransition.animateColor(
+        initialValue = MaterialTheme.colorScheme.surface,
+        targetValue = MaterialTheme.colorScheme.tertiaryContainer,
+        animationSpec = infiniteRepeatable(
+            animation = tween(700),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "ColorBlink"
+    )
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(MaterialTheme.colorScheme.surface)
+            .background(if (isHighlighted) blinkColor else MaterialTheme.colorScheme.surface)
             .clickable { onClick() }
             .padding(10.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -404,8 +442,7 @@ fun TransactionItem(
             Text(
                 text = dateNumeral,
                 color = Color.White,
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp
+                style = MaterialTheme.typography.titleMedium
             )
         }
 
@@ -447,8 +484,7 @@ fun TransactionItem(
                 ) {
                     Text(
                         text = "${if (entry.from == currentUserName) "You" else entry.from} \u2192 ${if (entry.to == currentUserName) "You" else entry.to}",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp,
+                        style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onBackground
                     )
 
@@ -468,7 +504,7 @@ fun TransactionItem(
 
             Text(
                 text = entry.description,
-                fontSize = 12.sp,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -482,8 +518,8 @@ fun TransactionItem(
         ) {
             Text(
                 text = formatToFigmaTk(entry.amount),
+                style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
                 color = MaterialTheme.colorScheme.onBackground
             )
 
@@ -499,7 +535,7 @@ fun TransactionItem(
                 )
                 Text(
                     text = if (isSent) "Sent" else "Received",
-                    fontSize = 12.sp,
+                    style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Medium,
                     color = if (isSent) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.error
                 )
@@ -574,7 +610,8 @@ fun SettlementsPreviewLight() {
                         selectedYear = 2026,
                         currentUser = mockUser,
                         onDateSelected = { _, _ -> },
-                        onRefreshClick = {}
+                        onRefreshClick = {},
+                        isRefreshing = false
                     )
                     Box(modifier = Modifier.fillMaxSize()) {
                         SettlementsContent(
@@ -586,6 +623,7 @@ fun SettlementsPreviewLight() {
                             onTypeFilterChange = {},
                             onAddSettlementClick = {},
                             onEntryClick = {},
+                            highlightId = null,
                             bottomPadding = paddingValues.calculateBottomPadding()
                         )
                     }
@@ -655,7 +693,8 @@ fun SettlementsPreviewDark() {
                         selectedYear = 2026,
                         currentUser = mockUser,
                         onDateSelected = { _, _ -> },
-                        onRefreshClick = {}
+                        onRefreshClick = {},
+                        isRefreshing = false
                     )
                     Box(modifier = Modifier.fillMaxSize()) {
                         SettlementsContent(
@@ -667,6 +706,7 @@ fun SettlementsPreviewDark() {
                             onTypeFilterChange = {},
                             onAddSettlementClick = {},
                             onEntryClick = {},
+                            highlightId = null,
                             bottomPadding = paddingValues.calculateBottomPadding()
                         )
                     }

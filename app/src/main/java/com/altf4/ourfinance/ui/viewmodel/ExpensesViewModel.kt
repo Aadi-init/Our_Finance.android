@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
+import com.altf4.ourfinance.data.model.ExpensesResponse
+import com.altf4.ourfinance.utils.CacheManager
 
 class ExpensesViewModel : ViewModel() {
 
@@ -30,25 +32,61 @@ class ExpensesViewModel : ViewModel() {
     private val _filterType = MutableStateFlow("All Entries")
     val filterType: StateFlow<String> = _filterType.asStateFlow()
 
+//    fun fetchExpenses(currentUser: String, forceRefresh: Boolean = false) {
+//        viewModelScope.launch {
+//            _uiState.value = _uiState.value.copy(isLoading = true)
+//
+//            try {
+//                val response = RetrofitClient.apiService.getExpenses(username = currentUser)
+//
+//                // Sync roommate profiles to UserManager
+//                UserManager.syncUserProfiles(response.userProfiles)
+//
+//                allRawEntries = response.entries
+//                updateFilteredState(currentUser)
+//            } catch (e: Exception) {
+//                Log.e("PerformanceAudit", "Fetch Expenses Error", e)
+//                _uiState.value = _uiState.value.copy(
+//                    isLoading = false,
+//                    isInitialized = true,
+//                    error = e.localizedMessage ?: "Failed to fetch expense data"
+//                )
+//            }
+//        }
+//    }
+
     fun fetchExpenses(currentUser: String, forceRefresh: Boolean = false) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
+            // 1. INSTANT CACHE LOAD
+            val cachedResponse = CacheManager.getCachedData<ExpensesResponse>("expenses_$currentUser")
+            if (cachedResponse != null) {
+                allRawEntries = cachedResponse.entries
+                updateFilteredState(currentUser, isLoading = true)
+            } else {
+                _uiState.value = _uiState.value.copy(isLoading = true)
+            }
 
+            // 2. BACKGROUND NETWORK FETCH
             try {
                 val response = RetrofitClient.apiService.getExpenses(username = currentUser)
 
-                // Sync roommate profiles to UserManager
+                // Save fresh data
+                CacheManager.saveCacheData("expenses_$currentUser", response)
                 UserManager.syncUserProfiles(response.userProfiles)
 
                 allRawEntries = response.entries
-                updateFilteredState(currentUser)
+                updateFilteredState(currentUser, isLoading = false)
             } catch (e: Exception) {
                 Log.e("PerformanceAudit", "Fetch Expenses Error", e)
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    isInitialized = true,
-                    error = e.localizedMessage ?: "Failed to fetch expense data"
-                )
+                if (allRawEntries.isEmpty()) {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        isInitialized = true,
+                        error = e.localizedMessage ?: "Failed to fetch expense data"
+                    )
+                } else {
+                    _uiState.value = _uiState.value.copy(isLoading = false)
+                }
             }
         }
     }
@@ -64,7 +102,7 @@ class ExpensesViewModel : ViewModel() {
         updateFilteredState(currentUser)
     }
 
-    private fun updateFilteredState(currentUser: String) {
+    private fun updateFilteredState(currentUser: String, isLoading: Boolean = false) {
         val filteredByDate = allRawEntries.filter { entry ->
             val entryDate = parseTimestamp(entry.timestamp)
             val cal = Calendar.getInstance().apply { time = entryDate }
@@ -86,7 +124,7 @@ class ExpensesViewModel : ViewModel() {
         }
 
         _uiState.value = _uiState.value.copy(
-            isLoading = false,
+            isLoading = isLoading,
             isInitialized = true,
             allEntries = filteredByDate,
             filteredEntries = filteredEntries,
